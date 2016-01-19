@@ -94,7 +94,7 @@ class Pppoe(object):
             f.close()
             os.system("ifup ppp0")
             os.system("route add default ppp0")
-        self.status.set_from_file("/opt/pppoedi/disconnected.png")
+        self.status.set_from_file("/opt/pppoedi/images/disconnected.png")
         active_status=False
         timesleep=3
         connect_active=True
@@ -109,7 +109,7 @@ class Pppoe(object):
             os.system("poff lar")
         elif self.linux_os.find("Fedora") != -1:
             os.system("ifdown ppp0")
-        self.status.set_from_file("/opt/pppoedi/inactive.png")
+        self.status.set_from_file("/opt/pppoedi/images/inactive.png")
         connect_active = False
     
 class CheckConnection(threading.Thread):
@@ -130,11 +130,11 @@ class CheckConnection(threading.Thread):
                 interface=commands.getoutput('route -n')
                 interface=interface.split("\n")[2].split(' ')[-1]
                 if interface == "ppp0" and not active_status:
-                    self.status.set_from_file("/opt/pppoedi/connected.png")
+                    self.status.set_from_file("/opt/pppoedi/images/connected.png")
                     self.active_status=True
                     timesleep=60
                 elif interface != "ppp0" and active_status:
-                    self.status.set_from_file("/opt/pppoedi/disconnected.png")
+                    self.status.set_from_file("/opt/pppoedi/images/disconnected.png")
                     self.active_status=False
                     timesleep=3
             time.sleep(timesleep)

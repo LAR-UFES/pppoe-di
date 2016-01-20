@@ -53,6 +53,9 @@ class Pppoe(object):
                 self.checkbutton_savepass.set_active(True)
         check_conn=CheckConnection(self.status)
         check_conn.start()
+        net=commands.getoutput('route -n')
+        net=net.split("\n")[2].split(' ')[9]
+        os.system("route add -net 200.137.66.0/24 gw "+net)
 
     def quit_pppoe(self, widget):
         global quit_pppoedi

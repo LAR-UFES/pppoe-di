@@ -42,7 +42,7 @@ class Pppoe(object):
 
         self.pap = "/etc/ppp/pap-secrets"
 
-        uname = os.system("uname -a")
+        uname = check_output("uname -a")
 
         if uname.find("Ubuntu"):
             self.linux_os = "Ubuntu"

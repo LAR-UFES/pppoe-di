@@ -11,9 +11,9 @@ import time
 
 from subprocess import check_output
 import gi
+
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk as gtk
-
 
 quit_pppoedi = False
 connect_active = False
@@ -42,11 +42,11 @@ class Pppoe(object):
 
         self.pap = "/etc/ppp/pap-secrets"
 
-        uname = check_output("uname -a")
+        uname = check_output(['uname', '-a'])
 
-        if uname.find("Ubuntu"):
+        if b'Ubuntu' in uname:
             self.linux_os = "Ubuntu"
-        elif uname.find("Fedora"):
+        elif b'Fedora' in uname:
             self.linux_os = "Fedora"
 
         self.file_pppoe = os.getenv("HOME") + "/.pppoedi"
@@ -98,7 +98,7 @@ class Pppoe(object):
 
         login = self.entry_login.get_text()
         password = self.entry_password.get_text()
-        interface = check_output('route -n')
+        interface = check_output(["route", "-n"])
         interface = interface.split("\n")[2].split(' ')[-1]
 
         with open(self.pap, 'w') as f:
@@ -113,7 +113,7 @@ class Pppoe(object):
             peer_lar = "/etc/ppp/peers/lar"
 
             config_peer = (
-            'noipdefault\ndefaultroute\nreplacedefaultroute\nhide-password\nnoauth\npersist\nplugin rp-pppoe.so ' + interface + '\nuser "' + login + '"\nusepeerdns"')
+                'noipdefault\ndefaultroute\nreplacedefaultroute\nhide-password\nnoauth\npersist\nplugin rp-pppoe.so ' + interface + '\nuser "' + login + '"\nusepeerdns"')
             with open(peer_lar, "w") as f:
                 f.write(config_peer)
 
@@ -126,7 +126,8 @@ class Pppoe(object):
         elif self.linux_os == 'Fedora':
             peer_lar = "/etc/sysconfig/network-scripts/ifcfg-ppp"
 
-            config_peer = ('USERCTL=yes\nBOOTPROTO=dialup\nNAME=DSLppp0\nDEVICE=ppp0\nTYPE=xDSL\nONBOOT=no\nPIDFILE=/var/run/pppoe-adsl.pid\nFIREWALL=NONE\nPING=.\nPPPOE_TIMEOUT=80\nLCP_FAILURE=3\nLCP_INTERVAL=20\nCLAMPMSS=1412\nCONNECT_POLL=6\nCONNECT_TIMEOUT=60\nDEFROUTE=yes\nSYNCHRONOUS=no\nETH=' + interface + '\nPROVIDER=DSLppp0\nUSER=' + login + '\nPEERDNS=no\nDEMAND=no')
+            config_peer = (
+            'USERCTL=yes\nBOOTPROTO=dialup\nNAME=DSLppp0\nDEVICE=ppp0\nTYPE=xDSL\nONBOOT=no\nPIDFILE=/var/run/pppoe-adsl.pid\nFIREWALL=NONE\nPING=.\nPPPOE_TIMEOUT=80\nLCP_FAILURE=3\nLCP_INTERVAL=20\nCLAMPMSS=1412\nCONNECT_POLL=6\nCONNECT_TIMEOUT=60\nDEFROUTE=yes\nSYNCHRONOUS=no\nETH=' + interface + '\nPROVIDER=DSLppp0\nUSER=' + login + '\nPEERDNS=no\nDEMAND=no')
 
             with open(peer_lar, "w") as f:
                 f.write(config_peer)
@@ -178,7 +179,7 @@ class CheckConnection(threading.Thread):
         timesleep = 3
         while not quit_pppoedi:
             if connect_active:
-                interface = check_output('route -n')
+                interface = check_output(["route", "-n"])
                 interface = interface.split("\n")[2].split(' ')[-1]
                 if interface == "ppp0" and not active_status:
                     self.status.set_from_file("/opt/pppoedi/connected.png")

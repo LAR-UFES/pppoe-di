@@ -23,7 +23,7 @@ class Pppoe(object):
         object.__init__(self)
 
         builder = gtk.Builder()
-        builder.add_from_file("/opt/pppoedi/pppoedi.glade")
+        builder.add_from_file("pppoedi.glade")
 
         self.window = builder.get_object("main_window")
         self.entry_login = builder.get_object("entry_login")
@@ -41,9 +41,9 @@ class Pppoe(object):
 
         uname = os.system("uname -a")
 
-        if uname.find("Ubuntu") != 1:
+        if uname.find("Ubuntu"):
             self.linux_os = "Ubuntu"
-        elif uname.find("Fedora") != 1:
+        elif uname.find("Fedora"):
             self.linux_os = "Fedora"
 
         self.file_pppoe = os.getenv("HOME") + "/.pppoedi"

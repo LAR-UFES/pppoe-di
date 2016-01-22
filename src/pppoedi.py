@@ -10,20 +10,26 @@ import os
 import commands
 import threading
 import time
+import dbus
+from dbus.mainloop.glib import DBusGMainLoop
 
 quit_pppoedi=False
 connect_active=False
 active_status=False
 timesleep=3
 
+path_pppoe="/opt/pppoe-plugin/"
+sudo_password='1a2b3c4d'
+
 class Pppoe(object):
     def __init__(self):
         object.__init__(self)
         builder = gtk.Builder()
-        builder.add_from_file("/opt/pppoedi/pppoedi.glade")
+        builder.add_from_file(path_pppoe+"/src/pppoedi.glade")
         self.window = builder.get_object("main_window")
         self.entry_login = builder.get_object("entry_login")
         self.entry_password = builder.get_object("entry_password")
+        self.entry_password_sudo = builder.get_object("entry_password_sudo")
         self.status = builder.get_object("status")
         self.checkbutton_savepass = builder.get_object("checkbutton_savepass")
         self.window.show()
@@ -31,7 +37,8 @@ class Pppoe(object):
                                  "on_entry_login_activate":self.connect,
                                  "on_entry_password_activate":self.connect,
                                  "on_button_connect_clicked":self.connect,
-                                 "on_button_disconnect_clicked":self.disconnect})
+                                 "on_button_disconnect_clicked":self.disconnect,
+                                 "on_entry_password_sudo_activate":self.connect})
         self.pap="/etc/ppp/pap-secrets"
         f=open('/etc/os-release','r')
         line=''
@@ -55,7 +62,19 @@ class Pppoe(object):
         check_conn.start()
         net=commands.getoutput('route -n')
         net=net.split("\n")[2].split(' ')[9]
-        os.system("route add -net 200.137.66.0/24 gw "+net)
+        cmd="route add -net 200.137.66.0/24 gw "+net
+        os.system('echo %s|sudo -S %s' % (sudo_password, cmd))
+        DBusGMainLoop(set_as_default=True)
+        bus = dbus.SessionBus()
+        if self.linux_os.find("Ubuntu") != -1:
+            session=commands.getoutput('ps -A | egrep -i "gnome|kde|mate|cinnamon"')
+            if session.find('mate-session') != -1:
+                bus.add_match_string("type='signal',interface='org.gnome.ScreenSaver'")
+            elif session.find('gnome-session') != -1:
+                bus.add_match_string("type='signal',interface='com.ubuntu.Upstart0_6'")
+        elif self.linux_os.find("Fedora") != -1:
+            bus.add_match_string("type='signal',interface='org.gnome.ScreenSaver'")
+        bus.add_message_filter(filter_cb)
 
     def quit_pppoe(self, widget):
         global quit_pppoedi
@@ -78,26 +97,41 @@ class Pppoe(object):
         global timesleep
         login = self.entry_login.get_text()
         password = self.entry_password.get_text()
+        sudo_password = self.entry_password_sudo.get_text()
+        self.entry_login.set_property("editable", False)
+        self.entry_password.set_property("editable", False)
+        self.entry_password_sudo.set_property("editable", False)
         interface=commands.getoutput('route -n')
         interface=interface.split("\n")[2].split(' ')[-1]
-        f=open(self.pap,'w')
+        home=os.getenv("HOME")
+        f=open(home+"/aux",'w')
         line='"'+login+'" * "'+password+'"'
         f.write(line)
         f.close()
+        cmd='mv '+home+'/aux '+self.pap
+        os.system('echo %s|sudo -S %s' % (sudo_password, cmd))
         if self.linux_os.find("Ubuntu") != -1:
             lar="/etc/ppp/peers/lar"
-            f=open(lar,"w")
-            f.write('noipdefault\ndefaultroute\nreplacedefaultroute\nhide-password\nnoauth\npersist\nplugin rp-pppoe.so '+interface+'\nuser "'+login+'"\nusepeerdns')
+            f=open(home+"/aux",'w')
+            text='noipdefault\ndefaultroute\nreplacedefaultroute\nhide-password\nnoauth\npersist\nplugin rp-pppoe.so '+interface+'\nuser "'+login+'"\nusepeerdns'
+            f.write(text)
             f.close()
-            os.system("pon lar")
+            cmd='mv '+home+'/aux '+lar
+            os.system('echo %s|sudo -S %s' % (sudo_password, cmd))
+            cmd="pon lar"
+            os.system('echo %s|sudo -S %s' % (sudo_password, cmd))
         elif self.linux_os.find("Fedora") != -1:
             lar="/etc/sysconfig/network-scripts/ifcfg-ppp"
-            f=open(lar,"w")
+            f=open(home+"/aux","w")
             f.write('USERCTL=yes\nBOOTPROTO=dialup\nNAME=DSLppp0\nDEVICE=ppp0\nTYPE=xDSL\nONBOOT=no\nPIDFILE=/var/run/pppoe-adsl.pid\nFIREWALL=NONE\nPING=.\nPPPOE_TIMEOUT=80\nLCP_FAILURE=3\nLCP_INTERVAL=20\nCLAMPMSS=1412\nCONNECT_POLL=6\nCONNECT_TIMEOUT=60\nDEFROUTE=yes\nSYNCHRONOUS=no\nETH='+interface+'\nPROVIDER=DSLppp0\nUSER='+login+'\nPEERDNS=no\nDEMAND=no')
             f.close()
-            os.system("ifup ppp0")
-            os.system("route add default ppp0")
-        self.status.set_from_file("/opt/pppoedi/images/disconnected.png")
+            cmd='mv '+home+'/aux '+lar
+            os.system('echo %s|sudo -S %s' % (sudo_password, cmd))
+            cmd="ifup ppp0"
+            os.system('echo %s|sudo -S %s' % (sudo_password, cmd))
+            cmd="route add default ppp0"
+            os.system('echo %s|sudo -S %s' % (sudo_password, cmd))
+        self.status.set_from_file(path_pppoe+"/images/disconnected.png")
         active_status=False
         timesleep=3
         connect_active=True
@@ -106,13 +140,19 @@ class Pppoe(object):
     
     def disconnect(self, widget):
         global connect_active
-        f=open(self.pap,'w')
-        f.close()
+        self.entry_login.set_property("editable", True)
+        self.entry_password.set_property("editable", True)
+        self.entry_password_sudo.set_property("editable", True)
+        sudo_password = self.entry_password_sudo.get_text()
+        cmd='bash -c "echo  > '+self.pap+'"'
+        os.system('echo %s|sudo -S %s' % (sudo_password, cmd))
         if self.linux_os.find("Ubuntu") != -1:
-            os.system("poff lar")
+            cmd="poff lar"
+            os.system('echo %s|sudo -S %s' % (sudo_password, cmd))
         elif self.linux_os.find("Fedora") != -1:
-            os.system("ifdown ppp0")
-        self.status.set_from_file("/opt/pppoedi/images/inactive.png")
+            cmd="ifdown ppp0"
+            os.system('echo %s|sudo -S %s' % (sudo_password, cmd))
+        self.status.set_from_file(path_pppoe+"/images/inactive.png")
         connect_active = False
     
 class CheckConnection(threading.Thread):
@@ -130,17 +170,24 @@ class CheckConnection(threading.Thread):
         timesleep=3
         while not quit_pppoedi:
             if connect_active:
-                interface=commands.getoutput('route -n')
-                interface=interface.split("\n")[2].split(' ')[-1]
-                if interface == "ppp0" and not active_status:
-                    self.status.set_from_file("/opt/pppoedi/images/connected.png")
+                interface=commands.getoutput('ifconfig ppp0 | grep inet')
+                if interface != "" and not active_status:
+                    self.status.set_from_file(path_pppoe+"/images/connected.png")
                     self.active_status=True
                     timesleep=60
-                elif interface != "ppp0" and active_status:
-                    self.status.set_from_file("/opt/pppoedi/images/disconnected.png")
+                elif interface == "" and active_status:
+                    self.status.set_from_file(path_pppoe+"/images/disconnected.png")
                     self.active_status=False
                     timesleep=3
             time.sleep(timesleep)
+
+def filter_cb(bus, message):
+    if message.get_member() != "EventEmitted":
+        return
+    args = message.get_args_list()
+    if args[0] == "desktop-lock":
+        pppoe.disconnect(None)
+
 if __name__ == '__main__':
     pppoe = Pppoe()
     gtk.main()

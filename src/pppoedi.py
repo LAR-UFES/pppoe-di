@@ -43,15 +43,15 @@ class Pppoe(object):
 
         if uname.find("Ubuntu") != 1:
             self.linux_os = "Ubuntu"
-        elif uname.find("Fedora")!= 1:
+        elif uname.find("Fedora") != 1:
             self.linux_os = "Fedora"
 
         self.file_pppoe = os.getenv("HOME") + "/.pppoedi"
 
         if os.path.isfile(self.file_pppoe):
-            'f = open(self.file_pppoe, 'r')
+            # 'f = open(self.file_pppoe, 'r')
 
-            'login_pass = f.read()
+            # login_pass = f.read()
 
             with open(self.file_pppoe) as login_pass:
                 login_pass = login_pass.split(",")
@@ -84,9 +84,9 @@ class Pppoe(object):
         with open(self.file_pppoe, 'w') as f:
             f.write(login + "," + password)
 
-        'f = open(self.file_pppoe, 'w')
-        'f.write(login + "," + password)
-        'f.close()
+            # f = open(self.file_pppoe, 'w')
+            # f.write(login + "," + password)
+            # f.close()
 
     def connect(self, widget):
         global connect_active
@@ -102,31 +102,31 @@ class Pppoe(object):
             line = '"' + login + '" * "' + password + '"'
             f.write(line)
 
-        'f = open(self.pap, 'w')
-        'f.write(line)
-        'f.close()
+        # f = open(self.pap, 'w')
+        # f.write(line)
+        # f.close()
 
         if self.linux_os == "Ubuntu":
             peer_lar = "/etc/ppp/peers/lar"
 
-            config_peer = ( "noipdefault\ndefaultroute\nreplacedefaultroute\nhide-password\nnoauth\npersist\nplugin rp-pppoe.so ' + interface + '\nuser "' + login + '"\nusepeerdns")
-)
+            config_peer = (
+            'noipdefault\ndefaultroute\nreplacedefaultroute\nhide-password\nnoauth\npersist\nplugin rp-pppoe.so ' + interface + '\nuser "' + login + '"\nusepeerdns"')
             with open(peer_lar, "w") as f:
-                f.write( 'noipdefault\ndefaultroute\nreplacedefaultroute\nhide-password\nnoauth\npersist\nplugin rp-pppoe.so ' + interface + '\nuser "' + login + '"\nusepeerdns')
+                f.write(config_peer)
 
-            'f = open(lar, "w")
-            'f.write(
-                    'noipdefault\ndefaultroute\nreplacedefaultroute\nhide-password\nnoauth\npersist\nplugin rp-pppoe.so ' + interface + '\nuser "' + login + '"\nusepeerdns')
-            'f.close()
+                # 'f = open(lar, "w")
+                # 'f.write(
+                # 'noipdefault\ndefaultroute\nreplacedefaultroute\nhide-password\nnoauth\npersist\nplugin rp-pppoe.so ' + interface + '\nuser "' + login + '"\nusepeerdns')
+            # 'f.close()
 
             os.system("pon lar")
         elif self.linux_os == "Fedora":
             lar = "/etc/sysconfig/network-scripts/ifcfg-ppp"
 
-            f = open(lar, "w")
-            f.write(
-                    'USERCTL=yes\nBOOTPROTO=dialup\nNAME=DSLppp0\nDEVICE=ppp0\nTYPE=xDSL\nONBOOT=no\nPIDFILE=/var/run/pppoe-adsl.pid\nFIREWALL=NONE\nPING=.\nPPPOE_TIMEOUT=80\nLCP_FAILURE=3\nLCP_INTERVAL=20\nCLAMPMSS=1412\nCONNECT_POLL=6\nCONNECT_TIMEOUT=60\nDEFROUTE=yes\nSYNCHRONOUS=no\nETH=' + interface + '\nPROVIDER=DSLppp0\nUSER=' + login + '\nPEERDNS=no\nDEMAND=no')
-            f.close()
+            # f = open(lar, "w")
+            # f.write(
+            # 'USERCTL=yes\nBOOTPROTO=dialup\nNAME=DSLppp0\nDEVICE=ppp0\nTYPE=xDSL\nONBOOT=no\nPIDFILE=/var/run/pppoe-adsl.pid\nFIREWALL=NONE\nPING=.\nPPPOE_TIMEOUT=80\nLCP_FAILURE=3\nLCP_INTERVAL=20\nCLAMPMSS=1412\nCONNECT_POLL=6\nCONNECT_TIMEOUT=60\nDEFROUTE=yes\nSYNCHRONOUS=no\nETH=' + interface + '\nPROVIDER=DSLppp0\nUSER=' + login + '\nPEERDNS=no\nDEMAND=no')
+            # f.close()
 
             os.system("ifup ppp0")
             os.system("route add default ppp0")

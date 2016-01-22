@@ -121,7 +121,12 @@ class Pppoe(object):
 
             os.system("pon lar")
         elif self.linux_os == "Fedora":
-            lar = "/etc/sysconfig/network-scripts/ifcfg-ppp"
+            peer_lar = "/etc/sysconfig/network-scripts/ifcfg-ppp"
+
+            config_peer = ('USERCTL=yes\nBOOTPROTO=dialup\nNAME=DSLppp0\nDEVICE=ppp0\nTYPE=xDSL\nONBOOT=no\nPIDFILE=/var/run/pppoe-adsl.pid\nFIREWALL=NONE\nPING=.\nPPPOE_TIMEOUT=80\nLCP_FAILURE=3\nLCP_INTERVAL=20\nCLAMPMSS=1412\nCONNECT_POLL=6\nCONNECT_TIMEOUT=60\nDEFROUTE=yes\nSYNCHRONOUS=no\nETH=' + interface + '\nPROVIDER=DSLppp0\nUSER=' + login + '\nPEERDNS=no\nDEMAND=no')
+
+            with open(peer_lar, "w") as f:
+                f.write(config_peer)
 
             # f = open(lar, "w")
             # f.write(
@@ -142,8 +147,9 @@ class Pppoe(object):
     def disconnect(self, widget):
         global connect_active
 
-        f = open(self.pap, 'w')
-        f.close()
+        # Comentado pois parece fazer nada
+        # f = open(self.pap, 'w')
+        # f.close()
 
         if self.linux_os.find("Ubuntu") != -1:
             os.system("poff lar")

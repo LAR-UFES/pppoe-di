@@ -9,7 +9,7 @@ import os
 import threading
 import time
 
-import commands
+from subprocess import check_output
 from gi.repository import Gtk as gtk
 
 quit_pppoedi = False
@@ -49,7 +49,7 @@ class Pppoe(object):
         self.file_pppoe = os.getenv("HOME") + "/.pppoedi"
 
         if os.path.isfile(self.file_pppoe):
-            # 'f = open(self.file_pppoe, 'r')
+            # f = open(self.file_pppoe, 'r')
 
             # login_pass = f.read()
 
@@ -95,7 +95,7 @@ class Pppoe(object):
 
         login = self.entry_login.get_text()
         password = self.entry_password.get_text()
-        interface = commands.getoutput('route -n')
+        interface = check_output('route -n')
         interface = interface.split("\n")[2].split(' ')[-1]
 
         with open(self.pap, 'w') as f:
@@ -175,7 +175,7 @@ class CheckConnection(threading.Thread):
         timesleep = 3
         while not quit_pppoedi:
             if connect_active:
-                interface = commands.getoutput('route -n')
+                interface = check_output('route -n')
                 interface = interface.split("\n")[2].split(' ')[-1]
                 if interface == "ppp0" and not active_status:
                     self.status.set_from_file("/opt/pppoedi/connected.png")

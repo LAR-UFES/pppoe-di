@@ -1,9 +1,4 @@
 #!/usr/bin/python
-'''
-Created on Jan 14, 2016
-
-@author: analista
-'''
 
 import gi
 
@@ -99,18 +94,20 @@ class Pppoe(object):
         if self.linux_distro_type != 1 | self.linux_distro_type != 2:
             exit(1)
 
-        self.file_pppoe = os.getenv('HOME') + '/.pppoedi'  # Define a localizacao do arquivo de configuraçao do PPPoE
+        self.pppoe_file = os.getenv('HOME') + '/.pppoedi'  # Define a localizacao do arquivo de configuraçao do PPPoE
 
-        if os.path.isfile(self.file_pppoe):
-            f = open(self.file_pppoe, 'r')
-            login_pass = f.read()
-            login_pass = login_pass.split(",")
-            if len(login_pass) > 1:
-                login = login_pass[0]
-                password = login_pass[1]
-                self.entry_login.set_text(login)
-                self.entry_password.set_text(password)
-                self.checkbutton_savepass.set_active(True)
+        if os.path.isfile(self.pppoe_file):
+            with open(self.pppoe_file, 'r') as f:
+                login_pass = f.read()
+                login_pass = login_pass.split(",")
+
+                if len(login_pass) > 1:
+                    login = login_pass[0]
+                    password = login_pass[1]
+                    self.entry_login.set_text(login)
+                    self.entry_password.set_text(password)
+                    self.checkbutton_savepass.set_active(True)
+
         check_conn = CheckConnection(self.status)
         check_conn.start()
         net = subprocess.getoutput('route -n')
@@ -129,14 +126,18 @@ class Pppoe(object):
                 bus.add_match_string("type='signal',interface='com.ubuntu.Upstart0_6'")
         elif self.linux_distro_type == 2:
             bus.add_match_string("type='signal',interface='org.gnome.ScreenSaver'")
+
         bus.add_message_filter(filter_cb)
 
     def quit_pppoe(self, widget):
         global quit_pppoedi
         global connect_active
+
         quit_pppoedi = True
+
         if connect_active:
             self.disconnect(widget)
+
         gtk.main_quit()
 
     def save_pass(self):
@@ -146,25 +147,31 @@ class Pppoe(object):
         f.write(login + "," + password)
         f.close()
 
-    def connect(self, widget):
+    def connect(self):
         global connect_active
         global active_status
         global timesleep
+
         login = self.entry_login.get_text()
         password = self.entry_password.get_text()
         sudo_password = self.entry_password_sudo.get_text()
+
         self.entry_login.set_property("editable", False)
         self.entry_password.set_property("editable", False)
         self.entry_password_sudo.set_property("editable", False)
+
         interface = subprocess.getoutput('route -n')
         interface = interface.split("\n")[2].split(' ')[-1]
+
         home = os.getenv("HOME")
-        f = open(home + "/aux", 'w')
-        line = '"' + login + '" * "' + password + '"'
-        f.write(line)
-        f.close()
+
+        with open(home + "/aux", 'w') as f:
+            line = '"' + login + '" * "' + password + '"'
+            f.write(line)
+
         cmd = 'mv ' + home + '/aux ' + self.pap
         os.system('echo %s|sudo -S %s' % (sudo_password, cmd))
+
         if self.linux_distro_type == 1:
             lar = "/etc/ppp/peers/lar"
             f = open(home + "/aux", 'w')
@@ -187,27 +194,34 @@ class Pppoe(object):
             os.system('echo %s|sudo -S %s' % (sudo_password, cmd))
             cmd = "route add default ppp0"
             os.system('echo %s|sudo -S %s' % (sudo_password, cmd))
+
         self.status.set_from_file(path_pppoe + "/images/disconnected.png")
         active_status = False
         timesleep = 3
         connect_active = True
+
         if self.checkbutton_savepass.get_active():
             self.save_pass()
 
-    def disconnect(self, widget):
+    def disconnect(self):
         global connect_active
+
         self.entry_login.set_property("editable", True)
         self.entry_password.set_property("editable", True)
         self.entry_password_sudo.set_property("editable", True)
+
         sudo_password = self.entry_password_sudo.get_text()
+
         cmd = 'bash -c "echo  > ' + self.pap + '"'
         os.system('echo %s|sudo -S %s' % (sudo_password, cmd))
+
         if self.linux_distro_type == 1:
             cmd = "poff lar"
             os.system('echo %s|sudo -S %s' % (sudo_password, cmd))
         elif self.linux_distro_type == 2:
             cmd = "ifdown ppp0"
             os.system('echo %s|sudo -S %s' % (sudo_password, cmd))
+
         self.status.set_from_file(path_pppoe + "/images/inactive.png")
         connect_active = False
 
@@ -222,9 +236,11 @@ class CheckConnection(threading.Thread):
         global connect_active
         global active_status
         global timesleep
+
         threading.Thread.run(self)
         active_status = False
         timesleep = 3
+
         while not quit_pppoedi:
             if connect_active:
                 interface = subprocess.getoutput('ifconfig ppp0 | grep inet')
@@ -242,7 +258,9 @@ class CheckConnection(threading.Thread):
 def filter_cb(bus, message):
     if message.get_member() != "EventEmitted":
         return
+
     args = message.get_args_list()
+
     if args[0] == "desktop-lock":
         pppoe.disconnect(None)
 

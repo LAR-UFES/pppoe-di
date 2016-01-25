@@ -146,7 +146,7 @@ class Pppoe(object):
         f.write(login + "," + password)
         f.close()
 
-    def connect(self):
+    def connect(self, widget):
         global connect_active
         global active_status
         global timesleep
@@ -203,7 +203,7 @@ class Pppoe(object):
         if self.checkbutton_savepass.get_active():
             self.save_pass()
 
-    def disconnect(self):
+    def disconnect(self, widget):
         global connect_active
 
         self.entry_login.set_property("editable", True)

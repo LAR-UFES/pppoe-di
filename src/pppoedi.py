@@ -6,6 +6,7 @@ Created on Jan 14, 2016
 '''
 
 import gi
+
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk as gtk
 import os
@@ -45,12 +46,14 @@ class Pppoe(object):
 
         self.pap = '/etc/ppp/pap-secrets'
 
-        distro_name = ''
+        distro_name = ''  # Inicializa a variavel que armazena o nome da distribuicao em uso
 
+        # Le o nome da distribuicao em uso no arquivo '/etc/os-release' e armazena na variavel 'distro_name'
         with open('/etc/os-release', 'r') as f:
             while distro_name.find('NAME') == -1:
                 distro_name = f.readline()
 
+        # Lista com as distribuicoes mais populares baseadas em Debian
         debian_like_distro = ['Ubuntu',
                               'Ubuntu Studio',
                               'Ubuntu MATE'
@@ -68,27 +71,35 @@ class Pppoe(object):
                               'siduction',
                               'Raspbian',
                               'Debian']
+
+        # Lista com as distribuicoes mais populares baseadas em Fedora
         fedora_like_distro = ['Fedora',
                               'Red Hat Enterprise Linux',
                               'CentOS',
                               'ClearOS',
                               'Pidora']
 
+        # Inicializa a variavel que armazena o tipo da distribuicao em uso
+        # Assume o valor '1' se for baseada em Debian
+        # Assume o valor '2' se for baseada em RHEL/Fedora
         self.linux_distro_type = 0
 
+        # Procura cada item da lista de distros baseadas em Debian como substring do nome da distro em uso
         for x in range(0, len(debian_like_distro) - 1):
             if distro_name.find(debian_like_distro[x]) != -1:
                 self.linux_distro_type = 1
 
+        # Procura cada item da lista de distros baseadas em RHEL/Fedora como substring do nome da distro em uso
         if self.linux_distro_type != 1:
             for x in range(0, len(fedora_like_distro) - 1):
                 if distro_name.find(fedora_like_distro[x]) != -1:
                     self.linux_distro_type = 2
 
+        # Se a distribuicao em uso nao for baseada em Debian ou RHEL/Fedora, sai do programa com codigo '1'
         if self.linux_distro_type != 1 | self.linux_distro_type != 2:
             exit(1)
 
-        self.file_pppoe = os.getenv('HOME') + '/.pppoedi'
+        self.file_pppoe = os.getenv('HOME') + '/.pppoedi'  # Define a localizacao do arquivo de configuraçao do PPPoE
 
         if os.path.isfile(self.file_pppoe):
             f = open(self.file_pppoe, 'r')
@@ -168,7 +179,7 @@ class Pppoe(object):
             lar = "/etc/sysconfig/network-scripts/ifcfg-ppp"
             f = open(home + "/aux", "w")
             f.write(
-                'USERCTL=yes\nBOOTPROTO=dialup\nNAME=DSLppp0\nDEVICE=ppp0\nTYPE=xDSL\nONBOOT=no\nPIDFILE=/var/run/pppoe-adsl.pid\nFIREWALL=NONE\nPING=.\nPPPOE_TIMEOUT=80\nLCP_FAILURE=3\nLCP_INTERVAL=20\nCLAMPMSS=1412\nCONNECT_POLL=6\nCONNECT_TIMEOUT=60\nDEFROUTE=yes\nSYNCHRONOUS=no\nETH=' + interface + '\nPROVIDER=DSLppp0\nUSER=' + login + '\nPEERDNS=no\nDEMAND=no')
+                    'USERCTL=yes\nBOOTPROTO=dialup\nNAME=DSLppp0\nDEVICE=ppp0\nTYPE=xDSL\nONBOOT=no\nPIDFILE=/var/run/pppoe-adsl.pid\nFIREWALL=NONE\nPING=.\nPPPOE_TIMEOUT=80\nLCP_FAILURE=3\nLCP_INTERVAL=20\nCLAMPMSS=1412\nCONNECT_POLL=6\nCONNECT_TIMEOUT=60\nDEFROUTE=yes\nSYNCHRONOUS=no\nETH=' + interface + '\nPROVIDER=DSLppp0\nUSER=' + login + '\nPEERDNS=no\nDEMAND=no')
             f.close()
             cmd = 'mv ' + home + '/aux ' + lar
             os.system('echo %s|sudo -S %s' % (sudo_password, cmd))

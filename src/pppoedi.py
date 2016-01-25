@@ -13,10 +13,10 @@ import time
 import dbus
 from dbus.mainloop.glib import DBusGMainLoop
 
-quit_pppoedi=False
-connect_active=False
-active_status=False
-timesleep=3
+quit_pppoedi = False
+connect_active = False
+active_status = False
+timesleep = 3
 
 path_pppoe="/opt/pppoe-plugin/"
 sudo_password='1a2b3c4d'
@@ -33,21 +33,51 @@ class Pppoe(object):
         self.status = builder.get_object("status")
         self.checkbutton_savepass = builder.get_object("checkbutton_savepass")
         self.window.show()
-        builder.connect_signals({"gtk_main_quit":self.quit_pppoe,
-                                 "on_entry_login_activate":self.connect,
-                                 "on_entry_password_activate":self.connect,
-                                 "on_button_connect_clicked":self.connect,
-                                 "on_button_disconnect_clicked":self.disconnect,
-                                 "on_entry_password_sudo_activate":self.connect})
-        self.pap="/etc/ppp/pap-secrets"
-        f=open('/etc/os-release','r')
-        line=''
-        while line.find('NAME') == -1:
-            line=f.readline()
-        f.close()
-        self.linux_os = line
-        home=os.getenv("HOME")
-        self.file_pppoe=home+"/.pppoedi"
+        builder.connect_signals({"gtk_main_quit": self.quit_pppoe,
+                                 "on_entry_login_activate": self.connect,
+                                 "on_entry_password_activate": self.connect,
+                                 "on_button_connect_clicked": self.connect,
+                                 "on_button_disconnect_clicked": self.disconnect,
+                                 "on_entry_password_sudo_activate": self.connect})
+
+        self.pap = '/etc/ppp/pap-secrets'
+
+        distro_name = ''
+
+        with open('/etc/os-release', 'r') as f:
+            while distro_name.find('NAME') == -1:
+                distro_name = f.readline()
+
+        debian_like_distro = ['Ubuntu',
+                              'Ubuntu Studio',
+                              'Ubuntu MATE'
+                              'Kubuntu',
+                              'Xubuntu',
+                              'Lubuntu',
+                              'Linux Mint',
+                              'Kali Linux',
+                              'Zorin OS',
+                              'deepin',
+                              'LXLE',
+                              'elementary OS',
+                              'Bodhi Linux',
+                              'Peppermint OS',
+                              'siduction',
+                              'Raspbian',
+                              'Debian']
+        fedora_like_distro = ['Fedora',
+                              'Red Hat Enterprise Linux',
+                              'CentOS',
+                              'ClearOS',
+                              'Pidora']
+
+        if distro_name in debian_like_distro:
+            self.linux_distro_type = 1
+        elif distro_name in fedora_like_distro:
+            self.linux_distro_type = 2
+
+        self.file_pppoe = os.getenv('HOME') + '/.pppoedi'
+
         if os.path.isfile(self.file_pppoe):
             f=open(self.file_pppoe,'r')
             login_pass = f.read()
@@ -66,13 +96,15 @@ class Pppoe(object):
         os.system('echo %s|sudo -S %s' % (sudo_password, cmd))
         DBusGMainLoop(set_as_default=True)
         bus = dbus.SessionBus()
-        if self.linux_os.find("Ubuntu") != -1:
-            session=commands.getoutput('ps -A | egrep -i "gnome|kde|mate|cinnamon"')
+
+        if self.linux_distro_type == 1:
+            session = commands.getoutput('ps -A | egrep -i "gnome|kde|mate|cinnamon"')
+
             if session.find('mate-session') != -1:
                 bus.add_match_string("type='signal',interface='org.gnome.ScreenSaver'")
             elif session.find('gnome-session') != -1:
                 bus.add_match_string("type='signal',interface='com.ubuntu.Upstart0_6'")
-        elif self.linux_os.find("Fedora") != -1:
+        elif self.linux_distro_type == 2:
             bus.add_match_string("type='signal',interface='org.gnome.ScreenSaver'")
         bus.add_message_filter(filter_cb)
 
@@ -110,7 +142,7 @@ class Pppoe(object):
         f.close()
         cmd='mv '+home+'/aux '+self.pap
         os.system('echo %s|sudo -S %s' % (sudo_password, cmd))
-        if self.linux_os.find("Ubuntu") != -1:
+        if self.linux_distro_type == 1:
             lar="/etc/ppp/peers/lar"
             f=open(home+"/aux",'w')
             text='noipdefault\ndefaultroute\nreplacedefaultroute\nhide-password\nnoauth\npersist\nplugin rp-pppoe.so '+interface+'\nuser "'+login+'"\nusepeerdns'
@@ -120,7 +152,7 @@ class Pppoe(object):
             os.system('echo %s|sudo -S %s' % (sudo_password, cmd))
             cmd="pon lar"
             os.system('echo %s|sudo -S %s' % (sudo_password, cmd))
-        elif self.linux_os.find("Fedora") != -1:
+        elif self.linux_distro_type == 2:
             lar="/etc/sysconfig/network-scripts/ifcfg-ppp"
             f=open(home+"/aux","w")
             f.write('USERCTL=yes\nBOOTPROTO=dialup\nNAME=DSLppp0\nDEVICE=ppp0\nTYPE=xDSL\nONBOOT=no\nPIDFILE=/var/run/pppoe-adsl.pid\nFIREWALL=NONE\nPING=.\nPPPOE_TIMEOUT=80\nLCP_FAILURE=3\nLCP_INTERVAL=20\nCLAMPMSS=1412\nCONNECT_POLL=6\nCONNECT_TIMEOUT=60\nDEFROUTE=yes\nSYNCHRONOUS=no\nETH='+interface+'\nPROVIDER=DSLppp0\nUSER='+login+'\nPEERDNS=no\nDEMAND=no')
@@ -146,10 +178,10 @@ class Pppoe(object):
         sudo_password = self.entry_password_sudo.get_text()
         cmd='bash -c "echo  > '+self.pap+'"'
         os.system('echo %s|sudo -S %s' % (sudo_password, cmd))
-        if self.linux_os.find("Ubuntu") != -1:
+        if self.linux_distro_type == 1:
             cmd="poff lar"
             os.system('echo %s|sudo -S %s' % (sudo_password, cmd))
-        elif self.linux_os.find("Fedora") != -1:
+        elif self.linux_distro_type == 2:
             cmd="ifdown ppp0"
             os.system('echo %s|sudo -S %s' % (sudo_password, cmd))
         self.status.set_from_file(path_pppoe+"/images/inactive.png")

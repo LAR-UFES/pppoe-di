@@ -1,7 +1,6 @@
 #!/usr/bin/python
 
 import gi
-
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk as gtk
 import os
@@ -39,7 +38,7 @@ class Pppoe(object):
                                  "on_button_disconnect_clicked": self.disconnect,
                                  "on_entry_password_sudo_activate": self.connect})
 
-        self.pap = '/etc/ppp/pap-secrets'
+        self.pap_secrets_file = '/etc/ppp/pap-secrets'
 
         distro_name = ''  # Inicializa a variavel que armazena o nome da distribuicao em uso
 
@@ -169,25 +168,26 @@ class Pppoe(object):
             line = '"' + login + '" * "' + password + '"'
             f.write(line)
 
-        cmd = 'mv ' + home + '/aux ' + self.pap
+        cmd = 'mv ' + home + '/aux ' + self.pap_secrets_file
         os.system('echo %s|sudo -S %s' % (sudo_password, cmd))
 
         if self.linux_distro_type == 1:
             lar = "/etc/ppp/peers/lar"
-            f = open(home + "/aux", 'w')
-            text = 'noipdefault\ndefaultroute\nreplacedefaultroute\nhide-password\nnoauth\npersist\nplugin rp-pppoe.so ' + interface + '\nuser "' + login + '"\nusepeerdns'
-            f.write(text)
-            f.close()
+
+            with open(home + "/aux", 'w') as f:
+                text = 'noipdefault\ndefaultroute\nreplacedefaultroute\nhide-password\nnoauth\npersist\nplugin rp-pppoe.so ' + interface + '\nuser "' + login + '"\nusepeerdns'
+                f.write(text)
+
             cmd = 'mv ' + home + '/aux ' + lar
             os.system('echo %s|sudo -S %s' % (sudo_password, cmd))
             cmd = "pon lar"
             os.system('echo %s|sudo -S %s' % (sudo_password, cmd))
         elif self.linux_distro_type == 2:
             lar = "/etc/sysconfig/network-scripts/ifcfg-ppp"
-            f = open(home + "/aux", "w")
-            f.write(
+            with open(home + "/aux", "w") as f:
+                f.write(
                     'USERCTL=yes\nBOOTPROTO=dialup\nNAME=DSLppp0\nDEVICE=ppp0\nTYPE=xDSL\nONBOOT=no\nPIDFILE=/var/run/pppoe-adsl.pid\nFIREWALL=NONE\nPING=.\nPPPOE_TIMEOUT=80\nLCP_FAILURE=3\nLCP_INTERVAL=20\nCLAMPMSS=1412\nCONNECT_POLL=6\nCONNECT_TIMEOUT=60\nDEFROUTE=yes\nSYNCHRONOUS=no\nETH=' + interface + '\nPROVIDER=DSLppp0\nUSER=' + login + '\nPEERDNS=no\nDEMAND=no')
-            f.close()
+
             cmd = 'mv ' + home + '/aux ' + lar
             os.system('echo %s|sudo -S %s' % (sudo_password, cmd))
             cmd = "ifup ppp0"
@@ -212,7 +212,7 @@ class Pppoe(object):
 
         sudo_password = self.entry_password_sudo.get_text()
 
-        cmd = 'bash -c "echo  > ' + self.pap + '"'
+        cmd = 'bash -c "echo  > ' + self.pap_secrets_file + '"'
         os.system('echo %s|sudo -S %s' % (sudo_password, cmd))
 
         if self.linux_distro_type == 1:

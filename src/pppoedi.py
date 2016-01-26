@@ -140,7 +140,7 @@ class Pppoe(object):
             os.system("ifup ppp0")
             os.system("route add default ppp0")
 
-        self.status.set_from_file("/opt/pppoedi/disconnected.png")
+        self.status.gtk.Image.from_icon_name("network-offline", Gtk.IconSize.BUTTON)
         active_status = False
         timesleep = 3
         connect_active = True
@@ -160,7 +160,7 @@ class Pppoe(object):
         if self.linux_os == 'Fedora':
             os.system("ifdown ppp0")
 
-        self.status.set_from_file("/opt/pppoedi/inactive.png")
+        self.status.gtk.Image.from_icon_name("network-idle", Gtk.IconSize.BUTTON)
         connect_active = False
 
 
@@ -182,11 +182,11 @@ class CheckConnection(threading.Thread):
                 interface = check_output(["route", "-n"])
                 interface = interface.split("\n")[2].split(' ')[-1]
                 if interface == "ppp0" and not active_status:
-                    self.status.set_from_file("/opt/pppoedi/connected.png")
+                    self.status.gtk.Image.from_icon_name("network-offline", Gtk.IconSize.BUTTON)
                     self.active_status = True
                     timesleep = 60
                 elif interface != "ppp0" and active_status:
-                    self.status.set_from_file("/opt/pppoedi/disconnected.png")
+                    self.status.gtk.Image.from_icon_name("network-transmit-receive", Gtk.IconSize.BUTTON)
                     self.active_status = False
                     timesleep = 3
             time.sleep(timesleep)

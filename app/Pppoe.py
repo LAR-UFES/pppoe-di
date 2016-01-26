@@ -6,8 +6,6 @@ from gi.repository import Gtk as gtk
 
 from subprocess import getoutput
 import os
-import threading
-import time
 
 import Settings
 from CheckConnection import CheckConnection
@@ -88,7 +86,7 @@ class Pppoe(object):
                     self.linux_distro_type = 2
 
         # Se a distribuicao em uso nao for baseada em Debian ou RHEL/Fedora, sai do programa com codigo '1'
-        if self.linux_distro_type != 1 | self.linux_distro_type != 2:
+        if self.linux_distro_type not in (1, 2):
             exit(1)
 
         self.pppoe_file = os.getenv('HOME') + '/.pppoedi'  # Define a localizacao do arquivo de configuraçao do PPPoE

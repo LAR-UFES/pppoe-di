@@ -4,7 +4,7 @@ import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk as gtk
 import os
-import subprocess
+from subprocess import getoutput
 import os
 import threading
 import time
@@ -118,7 +118,7 @@ class Pppoe(object):
         check_conn = CheckConnection(self.status)
         check_conn.start()
 
-        net = subprocess.getoutput('route -n')
+        net = getoutput('route -n')
         net = net.split("\n")[2].split(' ')[9]
 
         cmd = "route add -net 200.137.66.0/24 gw " + net
@@ -128,7 +128,7 @@ class Pppoe(object):
         bus = dbus.SessionBus()
 
         if self.linux_distro_type == 1:
-            session = subprocess.getoutput('ps -A | egrep -i "gnome|kde|mate|cinnamon"')
+            session = getoutput('ps -A | egrep -i "gnome|kde|mate|cinnamon"')
 
             if session.find('mate-session') != -1:
                 bus.add_match_string("type='signal',interface='org.gnome.ScreenSaver'")
@@ -174,7 +174,7 @@ class Pppoe(object):
         self.entry_password.set_property("editable", False)
         self.entry_password_sudo.set_property("editable", False)
 
-        interface = subprocess.getoutput('route -n')
+        interface = getoutput('route -n')
         interface = interface.split("\n")[2].split(' ')[-1]
 
         home = os.getenv("HOME")
@@ -186,7 +186,7 @@ class Pppoe(object):
         cmd = 'mv ' + home + '/aux ' + self.pap_secrets_file
         os.system('echo %s|sudo -S %s' % (sudo_password, cmd))
 
-        if self.linux_distro_type == 1:
+        if self.linux_distro_type == 1:  # Se a distro e baseada em Debian
             lar = "/etc/ppp/peers/lar"
 
             with open(home + "/aux", 'w') as f:
@@ -198,7 +198,7 @@ class Pppoe(object):
 
             cmd = "pon lar"
             os.system('echo %s|sudo -S %s' % (sudo_password, cmd))
-        elif self.linux_distro_type == 2:
+        elif self.linux_distro_type == 2: # Se a distro e baseada em RHEL/Fedora
             lar = "/etc/sysconfig/network-scripts/ifcfg-ppp"
 
             with open(home + "/aux", "w") as f:
@@ -265,7 +265,7 @@ class CheckConnection(threading.Thread):
 
         while not quit_pppoedi:
             if connect_active:
-                interface = check_output(["route", "-n"])
+                interface = getoutput(["route", "-n"])
                 interface = interface.split("\n")[2].split(' ')[-1]
                 if interface == "ppp0" and not active_status:
                     self.status.gtk.Image.from_icon_name("network-offline", Gtk.IconSize.BUTTON)

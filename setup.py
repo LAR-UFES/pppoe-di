@@ -1,8 +1,10 @@
-from distutils.core import setup
+#!/usr/bin/env python
+
+from distutils.core import find_packages, setup
 
 setup(
         # Application name:
-        name='PPPoEDI',
+        name="PPPoEDI",
 
         # Version number (initial):
         version="0.0.91",
@@ -12,7 +14,7 @@ setup(
         author_email="monitores@inf.ufes.br",
 
         # Packages
-        packages=["app"],
+        packages=find_packages(),
 
         # Include additional files into the package
         include_package_data=True,

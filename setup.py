@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from distutils.core import find_packages, setup
+from setuptools import setup
 
 setup(
         # Application name:
@@ -14,7 +14,7 @@ setup(
         author_email="monitores@inf.ufes.br",
 
         # Packages
-        packages=find_packages(),
+        packages=['app'],
 
         # Include additional files into the package
         include_package_data=True,

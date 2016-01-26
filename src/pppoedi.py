@@ -109,10 +109,13 @@ class Pppoe(object):
 
         check_conn = CheckConnection(self.status)
         check_conn.start()
+
         net = subprocess.getoutput('route -n')
         net = net.split("\n")[2].split(' ')[9]
+
         cmd = "route add -net 200.137.66.0/24 gw " + net
         os.system('echo %s|sudo -S %s' % (sudo_password, cmd))
+
         DBusGMainLoop(set_as_default=True)
         bus = dbus.SessionBus()
 
@@ -180,18 +183,22 @@ class Pppoe(object):
 
             cmd = 'mv ' + home + '/aux ' + lar
             os.system('echo %s|sudo -S %s' % (sudo_password, cmd))
+
             cmd = "pon lar"
             os.system('echo %s|sudo -S %s' % (sudo_password, cmd))
         elif self.linux_distro_type == 2:
             lar = "/etc/sysconfig/network-scripts/ifcfg-ppp"
+
             with open(home + "/aux", "w") as f:
                 f.write(
                     'USERCTL=yes\nBOOTPROTO=dialup\nNAME=DSLppp0\nDEVICE=ppp0\nTYPE=xDSL\nONBOOT=no\nPIDFILE=/var/run/pppoe-adsl.pid\nFIREWALL=NONE\nPING=.\nPPPOE_TIMEOUT=80\nLCP_FAILURE=3\nLCP_INTERVAL=20\nCLAMPMSS=1412\nCONNECT_POLL=6\nCONNECT_TIMEOUT=60\nDEFROUTE=yes\nSYNCHRONOUS=no\nETH=' + interface + '\nPROVIDER=DSLppp0\nUSER=' + login + '\nPEERDNS=no\nDEMAND=no')
 
             cmd = 'mv ' + home + '/aux ' + lar
             os.system('echo %s|sudo -S %s' % (sudo_password, cmd))
+
             cmd = "ifup ppp0"
             os.system('echo %s|sudo -S %s' % (sudo_password, cmd))
+
             cmd = "route add default ppp0"
             os.system('echo %s|sudo -S %s' % (sudo_password, cmd))
 
@@ -244,6 +251,7 @@ class CheckConnection(threading.Thread):
         while not quit_pppoedi:
             if connect_active:
                 interface = subprocess.getoutput('ifconfig ppp0 | grep inet')
+
                 if interface != "" and not active_status:
                     self.status.set_from_file(path_pppoe + "/images/connected.png")
                     self.active_status = True

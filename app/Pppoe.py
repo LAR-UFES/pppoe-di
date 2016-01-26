@@ -1,18 +1,16 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk as gtk
-import os
+
 from subprocess import getoutput
 import os
 import threading
 import time
 
-quit_pppoedi = False
-connect_active = False
-active_status = False
-timesleep = 3
+import Settings
+from CheckConnection import CheckConnection
 
 path_pppoe = 'pppoe-plugin/'
 sudo_password = '1a2b3c4d'
@@ -96,16 +94,7 @@ class Pppoe(object):
         self.pppoe_file = os.getenv('HOME') + '/.pppoedi'  # Define a localizacao do arquivo de configuraçao do PPPoE
 
         if os.path.isfile(self.pppoe_file):
-            with open(self.pppoe_file, 'r') as f:
-                login_pass = f.read()
-
-        self.pap = "/etc/ppp/pap-secrets"
-
-        self.file_pppoe = os.getenv("HOME") + "/.pppoedi"
-
-        if os.path.isfile(self.file_pppoe):
-            with open(self.file_pppoe) as login_pass:
-
+            with open(self.pppoe_file) as login_pass:
                 login_pass = login_pass.split(",")
 
                 if len(login_pass) > 1:
@@ -140,12 +129,9 @@ class Pppoe(object):
         bus.add_message_filter(filter_cb)
 
     def quit_pppoe(self, widget):
-        global quit_pppoedi
-        global connect_active
+        Settings.quit_pppoedi = True
 
-        quit_pppoedi = True
-
-        if connect_active:
+        if Settings.connect_active:
             self.disconnect(widget)
 
         gtk.main_quit()
@@ -162,10 +148,6 @@ class Pppoe(object):
             f.write(login + "," + password)
 
     def connect(self, widget):
-        global connect_active
-        global active_status
-        global timesleep
-
         login = self.entry_login.get_text()
         password = self.entry_password.get_text()
         sudo_password = self.entry_password_sudo.get_text()
@@ -217,16 +199,14 @@ class Pppoe(object):
 
         self.status.gtk.Image.from_icon_name("network-offline", Gtk.IconSize.BUTTON)
 
-        active_status = False
-        timesleep = 3
-        connect_active = True
+        Settings.active_status = False
+        Settings.timesleep = 3
+        Settings.connect_active = True
 
         if self.checkbutton_savepass.get_active():
             self.save_pass()
 
     def disconnect(self, widget):
-        global connect_active
-
         self.entry_login.set_property("editable", True)
         self.entry_password.set_property("editable", True)
         self.entry_password_sudo.set_property("editable", True)
@@ -245,38 +225,7 @@ class Pppoe(object):
 
         self.status.gtk.Image.from_icon_name("network-idle", Gtk.IconSize.BUTTON)
 
-        connect_active = False
-
-
-class CheckConnection(threading.Thread):
-    def __init__(self, status):
-        threading.Thread.__init__(self)
-        self.status = status
-
-    def run(self):
-        global quit_pppoedi
-        global connect_active
-        global active_status
-        global timesleep
-
-        threading.Thread.run(self)
-        active_status = False
-        timesleep = 3
-
-        while not quit_pppoedi:
-            if connect_active:
-                interface = getoutput(["route", "-n"])
-                interface = interface.split("\n")[2].split(' ')[-1]
-                if interface == "ppp0" and not active_status:
-                    self.status.gtk.Image.from_icon_name("network-offline", Gtk.IconSize.BUTTON)
-                    self.active_status = True
-                    timesleep = 60
-                elif interface != "ppp0" and active_status:
-                    self.status.gtk.Image.from_icon_name("network-transmit-receive", Gtk.IconSize.BUTTON)
-                    self.active_status = False
-                    timesleep = 3
-            time.sleep(timesleep)
-
+        Settings.connect_active = False
 
 
 def filter_cb(bus, message):
@@ -287,7 +236,3 @@ def filter_cb(bus, message):
 
     if args[0] == "desktop-lock":
         pppoe.disconnect(None)
-
-if __name__ == '__main__':
-    pppoe = Pppoe()
-    gtk.main()

@@ -1,0 +1,4 @@
+[D-BUS Service]
+Name=com.lar.PppoeDi
+Exec=/usr/bin/pppoedi-service
+User=root

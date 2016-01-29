@@ -49,7 +49,7 @@ class PppoeDi(object):
         try:
             self.pppoedi_bus = system_bus.get_object("com.lar.PppoeDi","/PppoeDiService")
             self.pppoedi_bus_interface = dbus.Interface(self.pppoedi_bus, "com.lar.PppoeDi")
-        except dbus.DBusException:
+        except dbus.DBusException as e:
             #TODO: add pop-up
             sys.exit(1)
     

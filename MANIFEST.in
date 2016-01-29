@@ -1,2 +1,3 @@
-include LICENSE MANIFEST.in icon/pppoedi.desktop ui/pppoedi.glade
+include LICENSE MANIFEST.in icon/pppoedi.desktop
+recursive-include pppoediplugin/ui *
 recursive-include conf *

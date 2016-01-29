@@ -20,6 +20,7 @@ def main():
 
         # Packages
         packages=['pppoediplugin'],
+        package_data={'pppoediplugin':["ui/*"]},
 
         # Include additional files into the package
         #include_package_data=True,
@@ -38,7 +39,6 @@ def main():
         data_files=[('/usr/share/dbus-1/system-services/', ['conf/com.lar.PppoeDi.service']),
                     ('/usr/share/polkit-1/actions', ['conf/com.lar.pppoedi.policy']),
                     ('/etc/dbus-1/system.d/', ['conf/com.lar.PppoeDi.conf']),
-                    ('/usr/share/pppoedi',['ui/pppoedi.glade']),
                     ('/usr/share/applications',['icon/pppoedi.desktop'])],
         scripts=['scripts/pppoedi-service', 'scripts/pppoedi'],
         cmdclass={"install_dbus_service": install_dbus_service}

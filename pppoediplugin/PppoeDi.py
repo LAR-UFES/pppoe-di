@@ -19,7 +19,8 @@ class PppoeDi(object):
     def __init__(self):
         object.__init__(self)
         builder = gtk.Builder()
-        builder.add_from_file('/usr/share/pppoedi/pppoedi.glade')
+        glade_file=os.path.abspath(__file__).replace("PppoeDi.py","ui/pppoedi.glade")
+        builder.add_from_file(glade_file)
         self.window = builder.get_object("main_window")
         self.entry_login = builder.get_object("entry_login")
         self.entry_password = builder.get_object("entry_password")

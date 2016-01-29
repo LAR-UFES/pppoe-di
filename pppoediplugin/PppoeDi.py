@@ -14,8 +14,6 @@ from pppoediplugin.Settings import Settings
 import dbus
 from dbus.mainloop.glib import DBusGMainLoop
 import sys
-import threading
-import time
 
 class PppoeDi(object):
     def __init__(self):
@@ -39,8 +37,8 @@ class PppoeDi(object):
         self.set_distro()
         self.verify_saved_password()
         self.settings = Settings()
-        check_conn = CheckConnection(self.status, self.settings)
-        check_conn.start()
+        self.check_conn = CheckConnection(self.status, self.settings)
+        self.check_conn.start()
         self.initialize_dbus_session()
         self.initialize_pppoedi_bus()
 
@@ -129,6 +127,7 @@ class PppoeDi(object):
             self.disconnect(widget)
 
         self.pppoedi_bus_interface.Exit()
+        self.check_conn.terminate()
         gtk.main_quit()
 
     def save_pass(self):

@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
 
 from subprocess import getoutput
-import threading
+import multiprocessing
 import time
 import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk as gtk
 
-class CheckConnection(threading.Thread):
+class CheckConnection(multiprocessing.Process):
     def __init__(self, status, settings):
-        threading.Thread.__init__(self)
+        multiprocessing.Process.__init__(self)
         self.status = status
         self.settings = settings
 
     def run(self):
-        threading.Thread.run(self)
+        multiprocessing.Process.run(self)
         self.settings.active_status = False
         self.settings.time_sleep = 3
 

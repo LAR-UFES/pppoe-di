@@ -14,6 +14,7 @@ from pppoediplugin.Settings import Settings
 import dbus
 from dbus.mainloop.glib import DBusGMainLoop
 import sys
+import signal
 
 class PppoeDi(object):
     def __init__(self):
@@ -66,6 +67,8 @@ class PppoeDi(object):
                 sys.exit(1)
         elif self.linux_distro_type == 2:
             session_bus.add_match_string("type='signal',interface='org.gnome.ScreenSaver'")
+        signal.signal(signal.SIGTERM, self.dbus_quit)
+        session_bus.call_on_disconnection(self.dbus_quit)
         session_bus.add_message_filter(self.filter_cb)
 
     def verify_saved_password(self):
@@ -228,7 +231,9 @@ class PppoeDi(object):
         gtk.main()
 
     def filter_cb(self, bus, message):
-        if not (message.get_member() == "EventEmitted" or message.get_member() ==
+        if message.get_member() == "Disconnected":
+            self.quit_pppoe(None)
+        elif not (message.get_member() == "EventEmitted" or message.get_member() ==
                 'ActiveChanged'):
             return
     
@@ -236,3 +241,9 @@ class PppoeDi(object):
     
         if args[0] == "desktop-lock" or args[0] == True:
             self.disconnect(None)
+    
+    def dbus_quit(self, conn):
+        self.disconnect(None)
+        f=open("/home/analista/teste.txt","w")
+        f.write("oi")
+        f.close()

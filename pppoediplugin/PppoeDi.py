@@ -48,7 +48,7 @@ class PppoeDi(object):
         try:
             self.pppoedi_bus = system_bus.get_object("com.lar.PppoeDi","/PppoeDiService")
             self.pppoedi_bus_interface = dbus.Interface(self.pppoedi_bus, "com.lar.PppoeDi")
-        except dbus.DBusException as e:
+        except dbus.DBusException:
             #TODO: add pop-up
             sys.exit(1)
     
@@ -119,7 +119,8 @@ class PppoeDi(object):
         elif any(distro in distro_name for distro in fedora_like_distro):
             self.linux_distro_type = 2
         else:
-            exit(1)
+            #TODO: add pop-up
+            sys.exit(1)
 
     def quit_pppoe(self, widget):
         self.settings.quit_pppoedi = True
@@ -153,7 +154,13 @@ class PppoeDi(object):
 
         gw=route.split("\n")[2].split(' ')[9]
         net="200.137.66.0/24"
-        self.pppoedi_bus_interface.RouteAddNetGw(net,gw)
+        if self.linux_distro_type == 1:  # Se a distro e baseada em Debian
+            self.pppoedi_bus_interface.RouteAddNetGw(net,gw)
+        elif self.linux_distro_type == 2:  # Se a distro e baseada em
+            self.pppoedi_bus_interface.RouteAddNetGwF(net,gw)
+        else:
+            #TODO: add pop-up
+            sys.exit(1)
 
         line='"'+login+'" * "'+password+'"'
         self.pppoedi_bus_interface.PrintToFile(line,self.pap_secrets_file)
@@ -181,7 +188,10 @@ class PppoeDi(object):
             self.pppoedi_bus_interface.PrintToFile(config_peer,peer_lar)
             interface="ppp0"
             self.pppoedi_bus_interface.Ifup(interface)
-            self.pppoedi_bus_interface.RouteAddDefault(interface)
+            self.pppoedi_bus_interface.RouteAddDefaultF(interface)
+        else:
+            #TODO: add pop-up
+            sys.exit(1)
 
         self.status.set_from_icon_name("network-idle",
                                              gtk.IconSize.BUTTON)

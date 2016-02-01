@@ -142,8 +142,12 @@ class PppoeDi(object):
         login = self.entry_login.get_text()
         password = self.entry_password.get_text()
 
-        self.entry_login.set_property("editable", False)
-        self.entry_password.set_property("editable", False)
+        self.entry_login.set_editable(False)
+        self.entry_login.set_has_frame(False)
+        self.entry_login.set_can_focus(False)
+        self.entry_password.set_editable(False)
+        self.entry_password.set_has_frame(False)
+        self.entry_password.set_can_focus(False)
 
         route = getoutput('route -n')
 
@@ -190,8 +194,12 @@ class PppoeDi(object):
             self.save_pass()
 
     def disconnect(self, widget):
-        self.entry_login.set_property("editable", True)
-        self.entry_password.set_property("editable", True)
+        self.entry_login.set_editable(True)
+        self.entry_login.set_has_frame(True)
+        self.entry_login.set_can_focus(True)
+        self.entry_password.set_editable(True)
+        self.entry_password.set_has_frame(True)
+        self.entry_password.set_can_focus(True)
         self.pppoedi_bus_interface.FileBlank(self.pap_secrets_file)
 
         if self.linux_distro_type == 1:

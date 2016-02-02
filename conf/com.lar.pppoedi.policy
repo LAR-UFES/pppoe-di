@@ -7,9 +7,9 @@
  License: http://creativecommons.org/publicdomain/zero/1.0/ -->
 <policyconfig>
 
-  <vendor>Example</vendor>
-  <vendor_url>https://example.com/example</vendor_url>
-  <icon_name>example</icon_name>
+  <vendor>LAR</vendor>
+  <vendor_url>http://www.suporte.inf.ufes.br</vendor_url>
+  <icon_name>LAR</icon_name>
 
   <action id="com.lar.pppoediservice.hi">
     <description>This action doesn't do much actually, it's just an example.</description>

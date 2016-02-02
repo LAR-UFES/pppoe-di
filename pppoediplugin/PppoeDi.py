@@ -27,13 +27,13 @@ class PppoeDi(object):
         self.entry_password = builder.get_object("entry_password")
         self.status = builder.get_object("status")
         self.checkbutton_savepass = builder.get_object("checkbutton_savepass")
+        self.checkbutton_lockscreen = builder.get_object("checkbutton_lockscreen")
+        self.button_conn_disconn = builder.get_object("button_conn_disconn")
         self.window.show()
         builder.connect_signals({"gtk_main_quit": self.quit_pppoe,
-                                 "on_entry_login_activate": self.connect,
-                                 "on_entry_password_activate": self.connect,
-                                 "on_button_connect_clicked": self.connect,
-                                 "on_button_disconnect_clicked":
-                                     self.disconnect})
+                                 "on_entry_login_activate": self.conn_disconn,
+                                 "on_entry_password_activate": self.conn_disconn,
+                                 "on_button_conn_disconn_clicked": self.conn_disconn})
         self.pap_secrets_file = '/etc/ppp/pap-secrets'
         self.set_distro()
         self.verify_saved_password()
@@ -133,7 +133,7 @@ class PppoeDi(object):
         self.settings.quit_pppoedi = True
 
         if self.settings.connect_active:
-            self.disconnect(widget)
+            self.disconnect()
 
         self.pppoedi_bus_interface.Exit()
         self.check_conn.terminate()
@@ -146,7 +146,13 @@ class PppoeDi(object):
         with open(self.pppoe_file, 'w') as f:
             f.write(login + "," + password)
 
-    def connect(self, widget):
+    def conn_disconn(self, widget):
+        if self.settings.connect_active == True:
+            self.disconnect()
+        else:
+            self.connect()
+
+    def connect(self):
         login = self.entry_login.get_text()
         password = self.entry_password.get_text()
 
@@ -156,6 +162,7 @@ class PppoeDi(object):
         self.entry_password.set_editable(False)
         self.entry_password.set_has_frame(False)
         self.entry_password.set_can_focus(False)
+        self.button_conn_disconn.set_label("Disconnect")
 
         route = getoutput('route -n')
 
@@ -210,13 +217,14 @@ class PppoeDi(object):
         if self.checkbutton_savepass.get_active():
             self.save_pass()
 
-    def disconnect(self, widget):
+    def disconnect(self):
         self.entry_login.set_editable(True)
         self.entry_login.set_has_frame(True)
         self.entry_login.set_can_focus(True)
         self.entry_password.set_editable(True)
         self.entry_password.set_has_frame(True)
         self.entry_password.set_can_focus(True)
+        self.button_conn_disconn.set_label("Connect")
         self.pppoedi_bus_interface.FileBlank(self.pap_secrets_file)
 
         if self.linux_distro_type == 1:
@@ -235,23 +243,15 @@ class PppoeDi(object):
         gtk.main()
 
     def filter_cb(self, bus, message):
-        if message.get_member() == "EndSession":
-            self.quit_pppoe(None)
-        elif not (message.get_member() == "EventEmitted" or message.get_member() ==
-                'ActiveChanged'):
-            return
-    
-        args = message.get_args_list()
-    
-        if args[0] == "desktop-lock" or args[0] == True:
-            self.disconnect(None)
-        elif args[0] == "session-end":
-            self.quit_pppoe(None)
-        
-        
+        if self.checkbutton_lockscreen.get_active():
+            if message.get_member() == "EndSession":            
+                    self.quit_pppoe(None)
+            elif message.get_member() == "EventEmitted" or message.get_member() == 'ActiveChanged':
+                args = message.get_args_list()
+                if args[0] == "desktop-lock" or args[0] == True:
+                    self.disconnect()
+                elif args[0] == "session-end":
+                    self.quit_pppoe(None)
 
     def dbus_quit(self, conn):
-        self.disconnect(None)
-        f=open("/home/analista/teste.txt","w")
-        f.write("oi")
-        f.close()
+        self.disconnect()

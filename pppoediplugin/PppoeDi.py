@@ -35,7 +35,6 @@ class PppoeDi(object):
                                  "on_button_disconnect_clicked":
                                      self.disconnect})
         self.pap_secrets_file = '/etc/ppp/pap-secrets'
-
         self.set_distro()
         self.verify_saved_password()
         self.settings = Settings()
@@ -56,20 +55,25 @@ class PppoeDi(object):
     def initialize_dbus_session(self):
         DBusGMainLoop(set_as_default=True)
         session_bus = dbus.SessionBus()
+        session_bus2 = dbus.SessionBus()
         if self.linux_distro_type == 1:
             session=getoutput(['ps -A | egrep -i "gnome|kde|mate|cinnamon"'])
             if session.find('mate-session') != -1:
                 session_bus.add_match_string("type='signal',interface='org.mate.ScreenSaver'")
+                session_bus2.add_match_string("type='signal',interface='org.mate.SessionManager.ClientPrivate'")
             elif session.find('gnome-session') != -1:
                 session_bus.add_match_string("type='signal',interface='com.ubuntu.Upstart0_6'")
+                session_bus2.add_match_string("type='signal',interface='org.gnome.SessionManager.ClientPrivate'")
             else:
                 #TODO: add pop-up
                 sys.exit(1)
         elif self.linux_distro_type == 2:
             session_bus.add_match_string("type='signal',interface='org.gnome.ScreenSaver'")
+            session_bus2.add_match_string("type='signal',interface='org.gnome.SessionManager.ClientPrivate'")
         signal.signal(signal.SIGTERM, self.dbus_quit)
         session_bus.call_on_disconnection(self.dbus_quit)
         session_bus.add_message_filter(self.filter_cb)
+        session_bus2.add_message_filter(self.filter_cb)
 
     def verify_saved_password(self):
         self.pppoe_file = os.getenv(
@@ -231,7 +235,7 @@ class PppoeDi(object):
         gtk.main()
 
     def filter_cb(self, bus, message):
-        if message.get_member() == "Disconnected":
+        if message.get_member() == "EndSession":
             self.quit_pppoe(None)
         elif not (message.get_member() == "EventEmitted" or message.get_member() ==
                 'ActiveChanged'):
@@ -241,7 +245,11 @@ class PppoeDi(object):
     
         if args[0] == "desktop-lock" or args[0] == True:
             self.disconnect(None)
-    
+        elif args[0] == "session-end":
+            self.quit_pppoe(None)
+        
+        
+
     def dbus_quit(self, conn):
         self.disconnect(None)
         f=open("/home/analista/teste.txt","w")

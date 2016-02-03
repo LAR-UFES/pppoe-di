@@ -15,6 +15,7 @@ import dbus
 from dbus.mainloop.glib import DBusGMainLoop
 import sys
 import signal
+import time
 
 class PppoeDi(object):
     def __init__(self):
@@ -37,6 +38,7 @@ class PppoeDi(object):
         self.pap_secrets_file = '/etc/ppp/pap-secrets'
         self.set_distro()
         self.verify_saved_password()
+        self.checkbutton_lockscreen.set_active(True)
         self.settings = Settings()
         self.check_conn = CheckConnection(self.status, self.settings)
         self.check_conn.start()
@@ -56,20 +58,22 @@ class PppoeDi(object):
         DBusGMainLoop(set_as_default=True)
         session_bus = dbus.SessionBus()
         session_bus2 = dbus.SessionBus()
-        if self.linux_distro_type == 1:
-            session=getoutput(['ps -A | egrep -i "gnome|kde|mate|cinnamon"'])
-            if session.find('mate-session') != -1:
-                session_bus.add_match_string("type='signal',interface='org.mate.ScreenSaver'")
-                session_bus2.add_match_string("type='signal',interface='org.mate.SessionManager.ClientPrivate'")
-            elif session.find('gnome-session') != -1:
-                session_bus.add_match_string("type='signal',interface='com.ubuntu.Upstart0_6'")
-                session_bus2.add_match_string("type='signal',interface='org.gnome.SessionManager.ClientPrivate'")
-            else:
-                #TODO: add pop-up
-                sys.exit(1)
-        elif self.linux_distro_type == 2:
+        self.current_desktop = os.getenv("XDG_CURRENT_DESKTOP")
+        if self.current_desktop == "Unity":
+            session_bus.add_match_string("type='signal',interface='com.ubuntu.Upstart0_6'")
+            session_bus2.add_match_string("type='signal',interface='org.gnome.SessionManager.ClientPrivate'")
+        elif self.current_desktop == "MATE":
+            session_bus.add_match_string("type='signal',interface='org.mate.ScreenSaver'")
+            session_bus2.add_match_string("type='signal',interface='org.mate.SessionManager'")
+        elif self.current_desktop == "GNOME":
             session_bus.add_match_string("type='signal',interface='org.gnome.ScreenSaver'")
             session_bus2.add_match_string("type='signal',interface='org.gnome.SessionManager.ClientPrivate'")
+        elif self.current_desktop == "X-Cinnamon":        
+            session_bus.add_match_string("type='signal',interface='org.cinnamon.ScreenSaver'")
+            session_bus2.add_match_string("type='signal',interface='org.gnome.SessionManager'")
+        else:
+            #TODO: add pop-up
+            sys.exit(1)
         signal.signal(signal.SIGTERM, self.dbus_quit)
         session_bus.call_on_disconnection(self.dbus_quit)
         session_bus.add_message_filter(self.filter_cb)
@@ -189,6 +193,10 @@ class PppoeDi(object):
             self.pppoedi_bus_interface.PrintToFile(config_peer,peer_lar)
             interface="lar"
             self.pppoedi_bus_interface.Pon(interface)
+            if self.current_desktop == "MATE":
+                time.sleep(3.5)
+                interface="ppp0"
+                self.pppoedi_bus_interface.RouteAddDefault(interface)
         elif self.linux_distro_type == 2:  # Se a distro e baseada em
             # RHEL/Fedora
             peer_lar="/etc/sysconfig/network-scripts/ifcfg-ppp"
@@ -244,7 +252,7 @@ class PppoeDi(object):
 
     def filter_cb(self, bus, message):
         if self.checkbutton_lockscreen.get_active():
-            if message.get_member() == "EndSession":            
+            if message.get_member() == "EndSession" or message.get_member() == "ClientRemoved":
                     self.quit_pppoe(None)
             elif message.get_member() == "EventEmitted" or message.get_member() == 'ActiveChanged':
                 args = message.get_args_list()

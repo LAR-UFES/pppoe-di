@@ -37,13 +37,13 @@ class PppoeDi(object):
                                  "on_button_conn_disconn_clicked": self.conn_disconn})
         self.pap_secrets_file = '/etc/ppp/pap-secrets'
         self.set_distro()
-        self.verify_saved_password()
         self.checkbutton_lockscreen.set_active(True)
         self.settings = Settings()
         self.check_conn = CheckConnection(self.status, self.settings)
         self.check_conn.start()
         self.initialize_dbus_session()
         self.initialize_pppoedi_bus()
+        self.verify_saved_password()
 
     def initialize_pppoedi_bus(self):
         system_bus = dbus.SystemBus()
@@ -84,16 +84,15 @@ class PppoeDi(object):
             'HOME') + '/.pppoedi.conf'
         # Define a localizacao do arquivo de configuraçao do PPPoE
 
-        if os.path.isfile(self.pppoe_file):
-            with open(self.pppoe_file) as login_pass:
-                login_pass = login_pass.readline().split(",")
+        login_pass = self.pppoedi_bus_interface.ReadFromFile(self.pppoe_file)
+        login_pass = login_pass.split(",")
 
-                if len(login_pass) > 1:
-                    login = login_pass[0]
-                    password = login_pass[1]
-                    self.entry_login.set_text(login)
-                    self.entry_password.set_text(password)
-                    self.checkbutton_savepass.set_active(True)
+        if len(login_pass) > 1:
+            login = login_pass[0]
+            password = login_pass[1]
+            self.entry_login.set_text(login)
+            self.entry_password.set_text(password)
+            self.checkbutton_savepass.set_active(True)
 
     def set_distro(self):
         distro_name = ''  # Inicializa a variavel que armazena o nome da
@@ -146,9 +145,8 @@ class PppoeDi(object):
     def save_pass(self):
         login = self.entry_login.get_text()
         password = self.entry_password.get_text()
-
-        with open(self.pppoe_file, 'w') as f:
-            f.write(login + "," + password)
+        message = login + "," + password
+        self.pppoedi_bus_interface.PrintToFile700(message,self.pppoe_file)
 
     def conn_disconn(self, widget):
         if self.settings.connect_active == True:

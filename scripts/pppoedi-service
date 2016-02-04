@@ -166,6 +166,26 @@ class PppoeDiService(dbus.service.Object):
                          sender_keyword='sender', connection_keyword='conn')
     def Exit(self, sender=None, conn=None):
         mainloop.quit()
+    
+    @dbus.service.method("com.lar.PppoeDi",
+                         in_signature='s', out_signature='s',
+                         sender_keyword='sender', connection_keyword='conn')
+    def ReadFromFile(self, file_path, sender=None, conn=None):
+        self._check_polkit_privilege(sender, conn, 'com.lar.pppoediservice.hi')
+        if os.path.isfile(file_path):
+            with open(file_path) as login_pass:
+                return login_pass.readline()
+    
+    @dbus.service.method("com.lar.PppoeDi",
+                         in_signature='ss', out_signature='',
+                         sender_keyword='sender', connection_keyword='conn')
+    def PrintToFile700(self, message, file_path, sender=None, conn=None):
+        self._check_polkit_privilege(sender, conn, 'com.lar.pppoediservice.hi')
+        with open(file_path,'w') as f:
+            f.write(message)
+            f.close()
+        os.system("chown root:root "+file_path)
+        os.system("chmod 700 "+file_path)
 
 
 #    @classmethod

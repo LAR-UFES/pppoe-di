@@ -64,13 +64,17 @@ class PppoeDi(object):
             session_bus2.add_match_string("type='signal',interface='org.gnome.SessionManager.ClientPrivate'")
         elif self.current_desktop == "MATE":
             session_bus.add_match_string("type='signal',interface='org.mate.ScreenSaver'")
-            session_bus2.add_match_string("type='signal',interface='org.mate.SessionManager'")
+            session_bus2.add_match_string("type='signal',interface='org.mate.SessionManager.ClientPrivate'")
         elif self.current_desktop == "GNOME":
             session_bus.add_match_string("type='signal',interface='org.gnome.ScreenSaver'")
             session_bus2.add_match_string("type='signal',interface='org.gnome.SessionManager.ClientPrivate'")
         elif self.current_desktop == "X-Cinnamon":        
             session_bus.add_match_string("type='signal',interface='org.cinnamon.ScreenSaver'")
-            session_bus2.add_match_string("type='signal',interface='org.gnome.SessionManager'")
+            session_bus2.add_match_string("type='signal',interface='org.gnome.SessionManager.ClientPrivate'")
+        elif self.current_desktop == "LXDE":
+            return
+        elif self.current_desktop == "XFCE":
+            return
         else:
             #TODO: add pop-up
             sys.exit(1)
@@ -84,7 +88,12 @@ class PppoeDi(object):
             'HOME') + '/.pppoedi.conf'
         # Define a localizacao do arquivo de configuraçao do PPPoE
 
-        login_pass = self.pppoedi_bus_interface.ReadFromFile(self.pppoe_file)
+        login_pass=''
+        if os.path.isfile(self.pppoe_file):
+            with open(self.pppoe_file) as login_pass_file:
+                login_pass = login_pass_file.readline()
+        
+        #login_pass = self.pppoedi_bus_interface.ReadFromFile(self.pppoe_file)
         login_pass = login_pass.split(",")
 
         if len(login_pass) > 1:
@@ -146,7 +155,9 @@ class PppoeDi(object):
         login = self.entry_login.get_text()
         password = self.entry_password.get_text()
         message = login + "," + password
-        self.pppoedi_bus_interface.PrintToFile700(message,self.pppoe_file)
+        with open(self.pppoe_file,'w') as f:
+            f.write(message)
+            f.close()
 
     def conn_disconn(self, widget):
         if self.settings.connect_active == True:
@@ -250,7 +261,8 @@ class PppoeDi(object):
 
     def filter_cb(self, bus, message):
         if self.checkbutton_lockscreen.get_active():
-            if message.get_member() == "EndSession" or message.get_member() == "ClientRemoved":
+            if message.get_member() == "EndSession" or\
+               message.get_member() == "Disconnected":
                     self.quit_pppoe(None)
             elif message.get_member() == "EventEmitted" or message.get_member() == 'ActiveChanged':
                 args = message.get_args_list()

@@ -167,6 +167,7 @@ class PppoeDiService(dbus.service.Object):
     def Exit(self, sender=None, conn=None):
         mainloop.quit()
     
+    '''
     @dbus.service.method("com.lar.PppoeDi",
                          in_signature='s', out_signature='s',
                          sender_keyword='sender', connection_keyword='conn')
@@ -186,7 +187,7 @@ class PppoeDiService(dbus.service.Object):
             f.close()
         os.system("chown root:root "+file_path)
         os.system("chmod 700 "+file_path)
-
+    '''
 
 #    @classmethod
 #    def _log_in_file(klass, filename, string):

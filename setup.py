@@ -12,7 +12,7 @@ def main():
         name="PPPoEDI",
 
         # Version number (initial):
-        version="0.0.92",
+        version="0.0.93",
 
         # Application author details:
         author="LAR",

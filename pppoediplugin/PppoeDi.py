@@ -16,6 +16,7 @@ from dbus.mainloop.glib import DBusGMainLoop
 import sys
 import signal
 import time
+import base64
 
 class PppoeDi(object):
     def __init__(self):
@@ -99,6 +100,9 @@ class PppoeDi(object):
         if len(login_pass) > 1:
             login = login_pass[0]
             password = login_pass[1]
+            password = password.encode()
+            password = base64.b64decode(password)
+            password = password.decode()
             self.entry_login.set_text(login)
             self.entry_password.set_text(password)
             self.checkbutton_savepass.set_active(True)
@@ -154,6 +158,9 @@ class PppoeDi(object):
     def save_pass(self):
         login = self.entry_login.get_text()
         password = self.entry_password.get_text()
+        password = password.encode()
+        password = base64.b64encode(password)
+        password = password.decode()
         message = login + "," + password
         with open(self.pppoe_file,'w') as f:
             f.write(message)

@@ -12,7 +12,7 @@ def main():
         name="PPPoEDI",
 
         # Version number (initial):
-        version="0.0.93",
+        version="0.0.95",
 
         # Application author details:
         author="LAR",
@@ -40,7 +40,7 @@ def main():
                     ('/usr/share/polkit-1/actions', ['conf/com.lar.pppoedi.policy']),
                     ('/etc/dbus-1/system.d/', ['conf/com.lar.PppoeDi.conf']),
                     ('/usr/share/applications',['icon/pppoedi.desktop'])],
-        scripts=['scripts/pppoedi-service', 'scripts/pppoedi'],
+        scripts=['scripts/pppoedi-service', 'scripts/pppoedi', 'scripts/pppoedi-cli'],
         cmdclass={"install_dbus_service": install_dbus_service}
     )
 

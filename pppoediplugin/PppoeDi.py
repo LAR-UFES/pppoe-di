@@ -40,7 +40,7 @@ class PppoeDi(object):
         self.set_distro()
         self.checkbutton_lockscreen.set_active(True)
         self.settings = Settings()
-        self.check_conn = CheckConnection(self.status, self.settings)
+        self.check_conn = CheckConnection(self.status, self.settings, self)
         self.check_conn.start()
         self.initialize_dbus_session()
         self.initialize_pppoedi_bus()
@@ -152,7 +152,7 @@ class PppoeDi(object):
             self.disconnect()
 
         self.pppoedi_bus_interface.Exit()
-        self.check_conn.terminate()
+        #self.check_conn.terminate()
         gtk.main_quit()
 
     def save_pass(self):
@@ -209,7 +209,8 @@ class PppoeDi(object):
             self.pppoedi_bus_interface.PrintToFile(config_peer,peer_lar)
             interface="lar"
             self.pppoedi_bus_interface.Pon(interface)
-            if self.current_desktop == "MATE":
+            release=getoutput("lsb_release -r")
+            if self.current_desktop == "MATE" or (self.current_desktop == "Unity" and release.find("15.10") != -1):
                 time.sleep(3.5)
                 interface="ppp0"
                 self.pppoedi_bus_interface.RouteAddDefault(interface)
@@ -231,9 +232,10 @@ class PppoeDi(object):
             #TODO: add pop-up
             sys.exit(1)
 
-        self.status.set_from_icon_name("network-idle",
+        self.status.set_from_icon_name("network-error",
                                              gtk.IconSize.BUTTON)
 
+        self.settings.time_start = time.time()
         self.settings.active_status = False
         self.settings.time_sleep = 3
         self.settings.connect_active = True

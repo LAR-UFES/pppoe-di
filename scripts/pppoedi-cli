@@ -1,0 +1,6 @@
+#!/usr/bin/env python3
+
+from pppoediplugin.PppoeDiCli import PppoeDiCli
+
+if __name__ == '__main__':
+    pppoe = PppoeDiCli()

@@ -5,14 +5,14 @@ from distutils.command.install import install
 from distutils.core import Command
 
 def main():
-    
+
     install.sub_commands.append(('install_dbus_service',None))
     setup(
         # Application name:
         name="PPPoEDI",
 
         # Version number (initial):
-        version="0.0.95",
+        version="0.0.96",
 
         # Application author details:
         author="LAR",
@@ -26,7 +26,7 @@ def main():
         #include_package_data=True,
 
         # Details
-        url="http://www.suporte.inf.ufes.br",
+        url="https://lar.inf.ufes.br",
         license="LICENSE.txt",
         description="Interface grafica escrita em Python para conexao ao servidor PPPoE do DI.",
 
@@ -47,13 +47,13 @@ def main():
 class install_dbus_service(Command):
     description = "Install DBus .service file, modifying it so that it points to the correct script"
     user_options = []
-    
+
     def initialize_options(self):
         pass
-    
+
     def finalize_options(self):
         pass
-    
+
     def run(self):
         install_bin = self.get_finalized_command('install_scripts')
         script_install_dir = install_bin.install_dir

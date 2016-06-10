@@ -54,7 +54,7 @@ class PppoeDi(object):
         except dbus.DBusException:
             #TODO: add pop-up
             sys.exit(1)
-    
+
     def initialize_dbus_session(self):
         DBusGMainLoop(set_as_default=True)
         session_bus = dbus.SessionBus()
@@ -69,7 +69,7 @@ class PppoeDi(object):
         elif self.current_desktop == "GNOME":
             session_bus.add_match_string("type='signal',interface='org.gnome.ScreenSaver'")
             session_bus2.add_match_string("type='signal',interface='org.gnome.SessionManager.ClientPrivate'")
-        elif self.current_desktop == "X-Cinnamon":        
+        elif self.current_desktop == "X-Cinnamon":
             session_bus.add_match_string("type='signal',interface='org.cinnamon.ScreenSaver'")
             session_bus2.add_match_string("type='signal',interface='org.gnome.SessionManager.ClientPrivate'")
         elif self.current_desktop == "LXDE":
@@ -93,7 +93,7 @@ class PppoeDi(object):
         if os.path.isfile(self.pppoe_file):
             with open(self.pppoe_file) as login_pass_file:
                 login_pass = login_pass_file.readline()
-        
+
         #login_pass = self.pppoedi_bus_interface.ReadFromFile(self.pppoe_file)
         login_pass = login_pass.split(",")
 
@@ -188,10 +188,13 @@ class PppoeDi(object):
 
         gw=route.split("\n")[2].split(' ')[9]
         net="200.137.66.0/24"
+        sl="10.9.10.0/24"
         if self.linux_distro_type == 1:  # Se a distro e baseada em Debian
             self.pppoedi_bus_interface.RouteAddNetGw(net,gw)
+            self.pppoedi_bus_interface.RouteAddNetSl(sl,gw)
         elif self.linux_distro_type == 2:  # Se a distro e baseada em
             self.pppoedi_bus_interface.RouteAddNetGwF(net,gw)
+            self.pppoedi_bus_interface.RouteAddNetGwSlF(sl,gw)
         else:
             #TODO: add pop-up
             sys.exit(1)

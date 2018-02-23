@@ -27,7 +27,6 @@ class CheckConnection(threading.Thread):
                         self.pppoedi.button_conn_disconn.set_label("Disconnect")
                         self.pppoedi.button_conn_disconn.set_sensitive(True)
                     elif 'PAP authentication failed' in ppp_status:
-                        print ('authentication failed')
                         self.settings.active_status = False
                         self.pppoedi.disconnect()
                     elif 'Connection terminated.' in ppp_status or 'Unable to complete PPPoE Discovery' in ppp_status:

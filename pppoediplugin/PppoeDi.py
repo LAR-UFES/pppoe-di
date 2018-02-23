@@ -39,6 +39,13 @@ class PppoeDi(object):
         self.initialize_dbus_session()
         self.initialize_pppoedi_bus()
         self.disconnect()
+        self.showAlertMsg('Lembre-se de deslogar do PPPoE ao sair do computador.')
+    
+    def showAlertMsg(self, msg):
+        msg = gtk.MessageDialog(parent=self.window, type=gtk.MessageType.WARNING,buttons=gtk.ButtonsType.OK,message_format=msg)
+        if msg.run():
+            msg.destroy()
+            return None
 
     def initialize_pppoedi_bus(self):
         system_bus = dbus.SystemBus()

@@ -1,4 +1,4 @@
 #!/bin/bash
-tar xvzf PPPoEDI*
-cd PPPoEDI*
+#tar xvzf PPPoEDI*
+#cd PPPoEDI*
 python3 setup.py install

@@ -15,8 +15,6 @@ import dbus
 from dbus.mainloop.glib import DBusGMainLoop
 import sys
 import signal
-import time
-import base64
 
 class PppoeDi(object):
     def __init__(self):
@@ -27,9 +25,6 @@ class PppoeDi(object):
         self.window = builder.get_object("main_window")
         self.entry_login = builder.get_object("entry_login")
         self.entry_password = builder.get_object("entry_password")
-        self.status = builder.get_object("status")
-        self.checkbutton_savepass = builder.get_object("checkbutton_savepass")
-        self.checkbutton_lockscreen = builder.get_object("checkbutton_lockscreen")
         self.button_conn_disconn = builder.get_object("button_conn_disconn")
         self.window.show()
         builder.connect_signals({"gtk_main_quit": self.quit_pppoe,
@@ -38,13 +33,12 @@ class PppoeDi(object):
                                  "on_button_conn_disconn_clicked": self.conn_disconn})
         self.pap_secrets_file = '/etc/ppp/pap-secrets'
         self.set_distro()
-        self.checkbutton_lockscreen.set_active(True)
         self.settings = Settings()
-        self.check_conn = CheckConnection(self.status, self.settings, self)
+        self.check_conn = CheckConnection(self.settings, self)
         self.check_conn.start()
         self.initialize_dbus_session()
         self.initialize_pppoedi_bus()
-        self.verify_saved_password()
+        self.disconnect()
 
     def initialize_pppoedi_bus(self):
         system_bus = dbus.SystemBus()
@@ -58,20 +52,15 @@ class PppoeDi(object):
     def initialize_dbus_session(self):
         DBusGMainLoop(set_as_default=True)
         session_bus = dbus.SessionBus()
-        session_bus2 = dbus.SessionBus()
         self.current_desktop = os.getenv("XDG_CURRENT_DESKTOP")
         if self.current_desktop == "Unity":
             session_bus.add_match_string("type='signal',interface='com.ubuntu.Upstart0_6'")
-            session_bus2.add_match_string("type='signal',interface='org.gnome.SessionManager.ClientPrivate'")
         elif self.current_desktop == "MATE":
             session_bus.add_match_string("type='signal',interface='org.mate.ScreenSaver'")
-            session_bus2.add_match_string("type='signal',interface='org.mate.SessionManager.ClientPrivate'")
         elif self.current_desktop == "GNOME":
             session_bus.add_match_string("type='signal',interface='org.gnome.ScreenSaver'")
-            session_bus2.add_match_string("type='signal',interface='org.gnome.SessionManager.ClientPrivate'")
         elif self.current_desktop == "X-Cinnamon":
             session_bus.add_match_string("type='signal',interface='org.cinnamon.ScreenSaver'")
-            session_bus2.add_match_string("type='signal',interface='org.gnome.SessionManager.ClientPrivate'")
         elif self.current_desktop == "LXDE":
             return
         elif self.current_desktop == "XFCE":
@@ -81,31 +70,6 @@ class PppoeDi(object):
             sys.exit(1)
         signal.signal(signal.SIGTERM, self.dbus_quit)
         session_bus.call_on_disconnection(self.dbus_quit)
-        session_bus.add_message_filter(self.filter_cb)
-        session_bus2.add_message_filter(self.filter_cb)
-
-    def verify_saved_password(self):
-        self.pppoe_file = os.getenv(
-            'HOME') + '/.pppoedi.conf'
-        # Define a localizacao do arquivo de configuraçao do PPPoE
-
-        login_pass=''
-        if os.path.isfile(self.pppoe_file):
-            with open(self.pppoe_file) as login_pass_file:
-                login_pass = login_pass_file.readline()
-
-        #login_pass = self.pppoedi_bus_interface.ReadFromFile(self.pppoe_file)
-        login_pass = login_pass.split(",")
-
-        if len(login_pass) > 1:
-            login = login_pass[0]
-            password = login_pass[1]
-            password = password.encode()
-            password = base64.b64decode(password)
-            password = password.decode()
-            self.entry_login.set_text(login)
-            self.entry_password.set_text(password)
-            self.checkbutton_savepass.set_active(True)
 
     def set_distro(self):
         distro_name = ''  # Inicializa a variavel que armazena o nome da
@@ -155,21 +119,12 @@ class PppoeDi(object):
         #self.check_conn.terminate()
         gtk.main_quit()
 
-    def save_pass(self):
-        login = self.entry_login.get_text()
-        password = self.entry_password.get_text()
-        password = password.encode()
-        password = base64.b64encode(password)
-        password = password.decode()
-        message = login + "," + password
-        with open(self.pppoe_file,'w') as f:
-            f.write(message)
-            f.close()
-
     def conn_disconn(self, widget):
         if self.settings.connect_active == True:
             self.disconnect()
         else:
+            self.button_conn_disconn.set_label("Connecting...")
+            self.button_conn_disconn.set_sensitive(False)
             self.connect()
 
     def connect(self):
@@ -187,17 +142,15 @@ class PppoeDi(object):
         route = getoutput('route -n')
 
         gw=route.split("\n")[2].split(' ')[9]
-        net="200.137.66.0/24"
-        sl="10.9.10.0/24"
-        if self.linux_distro_type == 1:  # Se a distro e baseada em Debian
-            self.pppoedi_bus_interface.RouteAddNetGw(net,gw)
-            self.pppoedi_bus_interface.RouteAddNetSl(sl,gw)
-        elif self.linux_distro_type == 2:  # Se a distro e baseada em
-            self.pppoedi_bus_interface.RouteAddNetGwF(net,gw)
-            self.pppoedi_bus_interface.RouteAddNetGwSlF(sl,gw)
-        else:
-            #TODO: add pop-up
-            sys.exit(1)
+        net_list=["200.137.66.0/24","10.9.10.0/24","10.10.10.0/24"]
+        for net in net_list:
+            if self.linux_distro_type == 1:  # Se a distro e baseada em Debian
+                self.pppoedi_bus_interface.RouteAddNetGw(net,gw)
+            elif self.linux_distro_type == 2:  # Se a distro e baseada em
+                self.pppoedi_bus_interface.RouteAddNetGwF(net,gw)
+            else:
+                #TODO: add pop-up
+                sys.exit(1)
 
         line='"'+login+'" * "'+password+'"'
         self.pppoedi_bus_interface.PrintToFile(line,self.pap_secrets_file)
@@ -212,11 +165,6 @@ class PppoeDi(object):
             self.pppoedi_bus_interface.PrintToFile(config_peer,peer_lar)
             interface="lar"
             self.pppoedi_bus_interface.Pon(interface)
-            release=getoutput("lsb_release -r")
-            if self.current_desktop == "MATE" or (self.current_desktop == "Unity" and release.find("15.10") != -1):
-                time.sleep(3.5)
-                interface="ppp0"
-                self.pppoedi_bus_interface.RouteAddDefault(interface)
         elif self.linux_distro_type == 2:  # Se a distro e baseada em
             # RHEL/Fedora
             peer_lar="/etc/sysconfig/network-scripts/ifcfg-ppp"
@@ -235,16 +183,8 @@ class PppoeDi(object):
             #TODO: add pop-up
             sys.exit(1)
 
-        self.status.set_from_icon_name("network-error",
-                                             gtk.IconSize.BUTTON)
-
-        self.settings.time_start = time.time()
         self.settings.active_status = False
-        self.settings.time_sleep = 3
         self.settings.connect_active = True
-
-        if self.checkbutton_savepass.get_active():
-            self.save_pass()
 
     def disconnect(self):
         self.entry_login.set_editable(True)
@@ -254,6 +194,7 @@ class PppoeDi(object):
         self.entry_password.set_has_frame(True)
         self.entry_password.set_can_focus(True)
         self.button_conn_disconn.set_label("Connect")
+        self.button_conn_disconn.set_sensitive(True)
         self.pppoedi_bus_interface.FileBlank(self.pap_secrets_file)
 
         if self.linux_distro_type == 1:
@@ -263,25 +204,10 @@ class PppoeDi(object):
             interface="ppp0"
             self.pppoedi_bus_interface.Ifdown(interface)
 
-        self.status.set_from_icon_name("network-offline",
-                                             gtk.IconSize.BUTTON)
-
         self.settings.connect_active = False
 
     def main(self):
         gtk.main()
-
-    def filter_cb(self, bus, message):
-        if self.checkbutton_lockscreen.get_active():
-            if message.get_member() == "EndSession" or\
-               message.get_member() == "Disconnected":
-                    self.quit_pppoe(None)
-            elif message.get_member() == "EventEmitted" or message.get_member() == 'ActiveChanged':
-                args = message.get_args_list()
-                if args[0] == "desktop-lock" or args[0] == True:
-                    self.disconnect()
-                elif args[0] == "session-end":
-                    self.quit_pppoe(None)
 
     def dbus_quit(self, conn):
         self.disconnect()

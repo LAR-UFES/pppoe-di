@@ -72,6 +72,7 @@
             <property name="position">3</property>
           </packing>
         </child>
+        <!--
         <child>
           <object class="GtkCheckButton" id="checkbutton_savepass">
             <property name="label" translatable="yes">Save Password</property>
@@ -106,6 +107,7 @@
             <property name="position">5</property>
           </packing>
         </child>
+        -->
         <child>
           <object class="GtkButtonBox" id="buttonbox1">
             <property name="visible">True</property>
@@ -134,6 +136,7 @@
             <property name="position">6</property>
           </packing>
         </child>
+        <!--
         <child>
           <object class="GtkImage" id="status">
             <property name="visible">True</property>
@@ -149,6 +152,7 @@
             <property name="position">7</property>
           </packing>
         </child>
+        -->
       </object>
     </child>
   </object>

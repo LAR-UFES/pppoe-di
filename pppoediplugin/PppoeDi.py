@@ -34,17 +34,17 @@ class PppoeDi(object):
         self.pap_secrets_file = '/etc/ppp/pap-secrets'
         self.set_distro()
         self.settings = Settings()
-        self.check_conn = CheckConnection(self.settings, self)
+        self.check_conn = CheckConnection(self)
         self.check_conn.start()
         self.initialize_dbus_session()
         self.initialize_pppoedi_bus()
         self.disconnect()
         self.showAlertMsg('Lembre-se de deslogar do PPPoE ao sair do computador.')
     
-    def showAlertMsg(self, msg):
-        msg = gtk.MessageDialog(parent=self.window, type=gtk.MessageType.WARNING,buttons=gtk.ButtonsType.OK,message_format=msg)
-        if msg.run():
-            msg.destroy()
+    def showAlertMsg(self, msg, messageType=gtk.MessageType.WARNING):
+        msgDialog = gtk.MessageDialog(parent=self.window, type=messageType, buttons=gtk.ButtonsType.OK,message_format=msg)
+        if msgDialog.run():
+            msgDialog.destroy()
             return None
 
     def initialize_pppoedi_bus(self):
@@ -127,11 +127,9 @@ class PppoeDi(object):
         gtk.main_quit()
 
     def conn_disconn(self, widget):
-        if self.settings.connect_active == True:
+        if self.settings.connect_active:
             self.disconnect()
         else:
-            self.button_conn_disconn.set_label("Connecting...")
-            self.button_conn_disconn.set_sensitive(False)
             self.connect()
 
     def connect(self):
@@ -144,7 +142,8 @@ class PppoeDi(object):
         self.entry_password.set_editable(False)
         self.entry_password.set_has_frame(False)
         self.entry_password.set_can_focus(False)
-        self.button_conn_disconn.set_label("Disconnect")
+        self.button_conn_disconn.set_label("Conectando...")
+        self.button_conn_disconn.set_sensitive(False)
 
         route = getoutput('route -n')
 
@@ -200,7 +199,7 @@ class PppoeDi(object):
         self.entry_password.set_editable(True)
         self.entry_password.set_has_frame(True)
         self.entry_password.set_can_focus(True)
-        self.button_conn_disconn.set_label("Connect")
+        self.button_conn_disconn.set_label("Conectar")
         self.button_conn_disconn.set_sensitive(True)
         self.pppoedi_bus_interface.FileBlank(self.pap_secrets_file)
 

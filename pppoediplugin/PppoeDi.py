@@ -53,14 +53,14 @@ class PppoeDi(object):
             self.pppoedi_bus = system_bus.get_object("com.lar.PppoeDi","/PppoeDiService")
             self.pppoedi_bus_interface = dbus.Interface(self.pppoedi_bus, "com.lar.PppoeDi")
         except dbus.DBusException:
-            #TODO: add pop-up
+            self.showAlertMsg("Serviço ppppoedi não pode ser inicializado.",gtk.MessageType.ERROR)
             sys.exit(1)
 
     def initialize_dbus_session(self):
         DBusGMainLoop(set_as_default=True)
         session_bus = dbus.SessionBus()
         self.current_desktop = os.getenv("XDG_CURRENT_DESKTOP")
-        if self.current_desktop == "Unity":
+        if self.current_desktop == "Unity":#TUDO: Ubuntu 15 diferente
             session_bus.add_match_string("type='signal',interface='com.ubuntu.Upstart0_6'")
         elif self.current_desktop == "MATE":
             session_bus.add_match_string("type='signal',interface='org.mate.ScreenSaver'")
@@ -70,13 +70,14 @@ class PppoeDi(object):
             session_bus.add_match_string("type='signal',interface='org.cinnamon.ScreenSaver'")
         elif self.current_desktop == "LXDE":
             return
-        elif self.current_desktop == "XFCE":
-            return
+        #elif self.current_desktop == "XFCE":
+            #return
         else:
-            #TODO: add pop-up
+            self.showAlertMsg("Sistema não suportado.",gtk.MessageType.ERROR)
             sys.exit(1)
         signal.signal(signal.SIGTERM, self.dbus_quit)
         session_bus.call_on_disconnection(self.dbus_quit)
+        session_bus.add_message_filter(self.filter_cb)
 
     def set_distro(self):
         distro_name = ''  # Inicializa a variavel que armazena o nome da
@@ -110,10 +111,10 @@ class PppoeDi(object):
             self.linux_distro_type = 1
         # Procura cada item da lista de distros baseadas em RHEL/Fedora como
         # substring do nome da distro em uso
-        elif any(distro in distro_name for distro in fedora_like_distro):
-            self.linux_distro_type = 2
+        #elif any(distro in distro_name for distro in fedora_like_distro):
+            #self.linux_distro_type = 2
         else:
-            #TODO: add pop-up
+            self.showAlertMsg("Sistema não suportado.",gtk.MessageType.ERROR)
             sys.exit(1)
 
     def quit_pppoe(self, widget):
@@ -145,9 +146,11 @@ class PppoeDi(object):
         self.button_conn_disconn.set_label("Conectando...")
         self.button_conn_disconn.set_sensitive(False)
 
-        route = getoutput('route -n')
+        #route = getoutput('route -n')
+        route = getoutput('ip route show')
 
-        gw=route.split("\n")[2].split(' ')[9]
+        #gw=route.split("\n")[2].split(' ')[9]
+        gw=route.split('\n')[0].split(' ')[2]
         net_list=["200.137.66.0/24","10.9.10.0/24","10.10.10.0/24"]
         for net in net_list:
             if self.linux_distro_type == 1:  # Se a distro e baseada em Debian
@@ -161,7 +164,9 @@ class PppoeDi(object):
         line='"'+login+'" * "'+password+'"'
         self.pppoedi_bus_interface.PrintToFile(line,self.pap_secrets_file)
 
-        interface = route.split("\n")[2].split(' ')[-1]
+        #interface = route.split("\n")[2].split(' ')[-1]
+        interface = route.split('\n')[0].split(' ')[4]
+        
 
         if self.linux_distro_type == 1:  # Se a distro e baseada em Debian
             peer_lar="/etc/ppp/peers/lar"
@@ -170,7 +175,8 @@ class PppoeDi(object):
                         'so '+interface+'\nuser "'+login+'"\nusepeerdns'
             self.pppoedi_bus_interface.PrintToFile(config_peer,peer_lar)
             interface="lar"
-            self.pppoedi_bus_interface.Pon(interface)
+            #self.pppoedi_bus_interface.Pon(interface)
+            os.system("pon "+interface)
         elif self.linux_distro_type == 2:  # Se a distro e baseada em
             # RHEL/Fedora
             peer_lar="/etc/sysconfig/network-scripts/ifcfg-ppp"
@@ -217,3 +223,12 @@ class PppoeDi(object):
 
     def dbus_quit(self, conn):
         self.disconnect()
+    
+    def filter_cb(self, bus, message):
+        if message.get_member() == "1" or\
+           message.get_member() == "Disconnected":
+                self.quit_pppoe(None)
+        elif message.get_member() == "EventEmitted" or message.get_member() == 'ActiveChanged':
+            args = message.get_args_list()
+            if args[0] == "session-end":
+                self.quit_pppoe(None)

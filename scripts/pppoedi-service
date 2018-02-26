@@ -85,7 +85,8 @@ class PppoeDiService(dbus.service.Object):
                          sender_keyword='sender', connection_keyword='conn')
     def RouteAddNetGw(self, net, gw, sender=None, conn=None):
         self._check_polkit_privilege(sender, conn, 'com.lar.pppoediservice.hi')
-        cmd="route add -net "+net+" gw "+gw
+        #cmd="route add -net "+net+" gw "+gw
+        cmd="ip route add "+net+" via "+gw
         os.system(cmd)
 
     @dbus.service.method("com.lar.PppoeDi",

@@ -15,8 +15,12 @@ rm -rf /usr/lib/python2.7/site-packages/PPPoEDI*
 rm -rf /usr/local/lib/python2.7/dist-packages/pppoediplugin
 rm -rf /usr/lib/python2.7/site-packages/pppoediplugin
 rm /usr/local/bin/pppoedi
+rm /usr/local/bin/pppoedi-cli
 rm /usr/local/bin/pppoedi-service
 rm /usr/bin/pppoedi
+rm /usr/bin/pppoedi-cli
 rm /usr/bin/pppoedi-service
 rm -rf /usr/share/pppoedi
+rm -rf /usr/share/pppoedi-cli
+rm -rf /usr/share/pppoedi-service
 rm /usr/share/applications/pppoedi.desktop

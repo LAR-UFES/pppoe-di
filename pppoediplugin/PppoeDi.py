@@ -140,9 +140,11 @@ class PppoeDi(object):
         self.entry_login.set_editable(False)
         self.entry_login.set_has_frame(False)
         self.entry_login.set_can_focus(False)
+        self.entry_login.set_sensitive(False)
         self.entry_password.set_editable(False)
         self.entry_password.set_has_frame(False)
         self.entry_password.set_can_focus(False)
+        self.entry_password.set_sensitive(False)
         self.button_conn_disconn.set_label("Conectando...")
         self.button_conn_disconn.set_sensitive(False)
 
@@ -151,7 +153,11 @@ class PppoeDi(object):
 
         #gw=route.split("\n")[2].split(' ')[9]
         gw=route.split('\n')[0].split(' ')[2]
-        net_list=["200.137.66.0/24","10.9.10.0/24","10.10.10.0/24"]
+        net_list=[]
+        if gw == '192.168.1.1' or gw == '192.168.2.1':
+            net_list=["10.10.10.0/24"]
+        else:
+            net_list=["200.137.66.0/24","10.9.10.0/24"]
         for net in net_list:
             if self.linux_distro_type == 1:  # Se a distro e baseada em Debian
                 self.pppoedi_bus_interface.RouteAddNetGw(net,gw)
@@ -201,9 +207,11 @@ class PppoeDi(object):
         self.entry_login.set_editable(True)
         self.entry_login.set_has_frame(True)
         self.entry_login.set_can_focus(True)
+        self.entry_login.set_sensitive(True)
         self.entry_password.set_editable(True)
         self.entry_password.set_has_frame(True)
         self.entry_password.set_can_focus(True)
+        self.entry_password.set_sensitive(True)
         self.button_conn_disconn.set_label("Conectar")
         self.button_conn_disconn.set_sensitive(True)
         self.pppoedi_bus_interface.FileBlank(self.pap_secrets_file)

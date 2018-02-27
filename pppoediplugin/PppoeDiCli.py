@@ -22,10 +22,10 @@ class PppoeDiCli(object):
         self.pap_secrets_file = '/etc/ppp/pap-secrets'
         self.set_distro()
         self.settings = Settings()
-        self.check_conn = CheckConnectionCli(self.settings, self)
-        self.check_conn.start()
         self.current_desktop = os.getenv("XDG_CURRENT_DESKTOP")
         self.initialize_pppoedi_bus()
+        self.check_conn = CheckConnectionCli(self)
+        self.check_conn.start()
         try:
             self.login = input('Login: ')
             self.password = getpass.getpass()
@@ -76,9 +76,10 @@ class PppoeDiCli(object):
             self.linux_distro_type = 1
         # Procura cada item da lista de distros baseadas em RHEL/Fedora como
         # substring do nome da distro em uso
-        elif any(distro in distro_name for distro in fedora_like_distro):
-            self.linux_distro_type = 2
+        #elif any(distro in distro_name for distro in fedora_like_distro):
+            #self.linux_distro_type = 2
         else:
+            print('\033[91m'+"System is not supported."+'\033[0m')
             #TODO: add pop-up
             sys.exit(1)
 
@@ -91,22 +92,26 @@ class PppoeDiCli(object):
         GLib.MainLoop().quit()
 
     def connect(self):
-        route = getoutput('route -n')
+        #route = getoutput('route -n')
+        route = getoutput('ip route show')
 
-        gw=route.split("\n")[2].split(' ')[9]
-        net="200.137.66.0/24"
-        if self.linux_distro_type == 1:  # Se a distro e baseada em Debian
-            self.pppoedi_bus_interface.RouteAddNetGw(net,gw)
-        elif self.linux_distro_type == 2:  # Se a distro e baseada em
-            self.pppoedi_bus_interface.RouteAddNetGwF(net,gw)
-        else:
-            #TODO: add pop-up
-            sys.exit(1)
+        #gw=route.split("\n")[2].split(' ')[9]
+        gw=route.split('\n')[0].split(' ')[2]
+        net_list=["200.137.66.0/24","10.9.10.0/24","10.10.10.0/24"]
+        for net in net_list:
+            if self.linux_distro_type == 1:  # Se a distro e baseada em Debian
+                self.pppoedi_bus_interface.RouteAddNetGw(net,gw)
+            elif self.linux_distro_type == 2:  # Se a distro e baseada em
+                self.pppoedi_bus_interface.RouteAddNetGwF(net,gw)
+            else:
+                print('\033[91m'+"System is not supported."+'\033[0m')
+                sys.exit(1)
 
         line='"'+self.login+'" * "'+self.password+'"'
         self.pppoedi_bus_interface.PrintToFile(line,self.pap_secrets_file)
 
-        interface = route.split("\n")[2].split(' ')[-1]
+        #interface = route.split("\n")[2].split(' ')[-1]
+        interface = route.split('\n')[0].split(' ')[4]
 
         if self.linux_distro_type == 1:  # Se a distro e baseada em Debian
             peer_lar="/etc/ppp/peers/lar"
@@ -116,11 +121,13 @@ class PppoeDiCli(object):
             self.pppoedi_bus_interface.PrintToFile(config_peer,peer_lar)
             interface="lar"
             self.pppoedi_bus_interface.Pon(interface)
+            '''
             release=getoutput("lsb_release -r")
             if self.current_desktop == "MATE" or (self.current_desktop == "Unity" and release.find("15.10") != -1):
                 time.sleep(3.5)
                 interface="ppp0"
                 self.pppoedi_bus_interface.RouteAddDefault(interface)
+            '''
         elif self.linux_distro_type == 2:  # Se a distro e baseada em
             # RHEL/Fedora
             peer_lar="/etc/sysconfig/network-scripts/ifcfg-ppp"
@@ -136,12 +143,10 @@ class PppoeDiCli(object):
             self.pppoedi_bus_interface.Ifup(interface)
             self.pppoedi_bus_interface.RouteAddDefaultF(interface)
         else:
-            #TODO: add pop-up
+            print('\033[91m'+"System is not supported."+'\033[0m')
             sys.exit(1)
 
-        self.settings.time_start = time.time()
         self.settings.active_status = False
-        self.settings.time_sleep = 3
         self.settings.connect_active = True
 
     def disconnect(self):
@@ -153,5 +158,8 @@ class PppoeDiCli(object):
         elif self.linux_distro_type == 2:
             interface="ppp0"
             self.pppoedi_bus_interface.Ifdown(interface)
+        else:
+            print('\033[91m'+"System is not supported."+'\033[0m')
+            sys.exit(1)
 
         self.settings.connect_active = False

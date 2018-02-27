@@ -176,7 +176,6 @@ class PppoeDi(object):
             self.pppoedi_bus_interface.PrintToFile(config_peer,peer_lar)
             interface="lar"
             self.pppoedi_bus_interface.Pon(interface)
-            #os.system("pon "+interface)
         elif self.linux_distro_type == 2:  # Se a distro e baseada em
             # RHEL/Fedora
             peer_lar="/etc/sysconfig/network-scripts/ifcfg-ppp"
@@ -215,6 +214,9 @@ class PppoeDi(object):
         elif self.linux_distro_type == 2:
             interface="ppp0"
             self.pppoedi_bus_interface.Ifdown(interface)
+        else:
+            #TODO: add pop-up
+            sys.exit(1)
 
         self.settings.connect_active = False
 

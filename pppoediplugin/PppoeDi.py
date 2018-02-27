@@ -34,10 +34,10 @@ class PppoeDi(object):
         self.pap_secrets_file = '/etc/ppp/pap-secrets'
         self.set_distro()
         self.settings = Settings()
-        self.check_conn = CheckConnection(self)
-        self.check_conn.start()
         self.initialize_dbus_session()
         self.initialize_pppoedi_bus()
+        self.check_conn = CheckConnection(self)
+        self.check_conn.start()
         self.disconnect()
         self.showAlertMsg('Lembre-se de deslogar do PPPoE ao sair do computador.')
     
@@ -60,7 +60,7 @@ class PppoeDi(object):
         DBusGMainLoop(set_as_default=True)
         session_bus = dbus.SessionBus()
         self.current_desktop = os.getenv("XDG_CURRENT_DESKTOP")
-        if self.current_desktop == "Unity":#TUDO: Ubuntu 15 diferente
+        if self.current_desktop == "Unity":#TUDO: Ubuntu 17 diferente
             session_bus.add_match_string("type='signal',interface='com.ubuntu.Upstart0_6'")
         elif self.current_desktop == "MATE":
             session_bus.add_match_string("type='signal',interface='org.mate.ScreenSaver'")
@@ -175,8 +175,8 @@ class PppoeDi(object):
                         'so '+interface+'\nuser "'+login+'"\nusepeerdns'
             self.pppoedi_bus_interface.PrintToFile(config_peer,peer_lar)
             interface="lar"
-            #self.pppoedi_bus_interface.Pon(interface)
-            os.system("pon "+interface)
+            self.pppoedi_bus_interface.Pon(interface)
+            #os.system("pon "+interface)
         elif self.linux_distro_type == 2:  # Se a distro e baseada em
             # RHEL/Fedora
             peer_lar="/etc/sysconfig/network-scripts/ifcfg-ppp"

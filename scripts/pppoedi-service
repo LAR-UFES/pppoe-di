@@ -72,6 +72,7 @@ class PppoeDiService(dbus.service.Object):
         self.dbus_info = None
         self.polkit = None
         self.enforce_polkit = True
+        self.fsyslog = None
 
 #    @dbus.service.method("com.lar.PppoeDi",
 #                         in_signature='s', out_signature='',
@@ -166,7 +167,23 @@ class PppoeDiService(dbus.service.Object):
                          in_signature='', out_signature='',
                          sender_keyword='sender', connection_keyword='conn')
     def Exit(self, sender=None, conn=None):
+        if self.fsyslog is not None:
+            self.fsyslog.close()
         mainloop.quit()
+    
+    @dbus.service.method("com.lar.PppoeDi",
+                         in_signature='', out_signature='',
+                         sender_keyword='sender', connection_keyword='conn')
+    def OpenSyslog(self, sender=None, conn=None):
+        self._check_polkit_privilege(sender, conn, 'com.lar.pppoediservice.hi')
+        self.fsyslog = open('/var/log/syslog','r')
+        
+    @dbus.service.method("com.lar.PppoeDi",
+                         in_signature='', out_signature='s',
+                         sender_keyword='sender', connection_keyword='conn')
+    def ReadSyslog(self, sender=None, conn=None):
+        self._check_polkit_privilege(sender, conn, 'com.lar.pppoediservice.hi')
+        return self.fsyslog.read();
     
     '''
     @dbus.service.method("com.lar.PppoeDi",

@@ -16,9 +16,11 @@ class CheckConnection(threading.Thread):
     def run(self):
         super(CheckConnection,self).run()
         self.pppoedi.settings.active_status = False
-        fsyslog = open('/var/log/syslog','r')
+        #fsyslog = open('/var/log/syslog','r')
+        self.pppoedi.pppoedi_bus_interface.OpenSyslog()
         while not self.pppoedi.settings.quit_pppoedi:
-            ppp_status=fsyslog.read()
+            #ppp_status=fsyslog.read()
+            ppp_status=self.pppoedi.pppoedi_bus_interface.ReadSyslog()
             if self.pppoedi.settings.connect_active:
                 if ppp_status != '':
                     if 'PAP authentication succeeded' in ppp_status and not self.pppoedi.settings.active_status:
@@ -33,4 +35,4 @@ class CheckConnection(threading.Thread):
                         self.pppoedi.settings.active_status = False
                         self.pppoedi.disconnect()
             time.sleep(0.5)
-        fsyslog.close()
+        #fsyslog.close()

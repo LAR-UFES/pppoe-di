@@ -31,8 +31,13 @@ class CheckConnection(threading.Thread):
                         self.pppoedi.settings.active_status = False
                         self.pppoedi.disconnect()
                         GLib.idle_add(self.pppoedi.showAlertMsg,'Falha na autenticação.', gtk.MessageType.ERROR)
-                    elif 'Connection terminated.' in ppp_status or 'Unable to complete PPPoE Discovery' in ppp_status:
+                    elif 'Unable to complete PPPoE Discovery' in ppp_status:
                         self.pppoedi.settings.active_status = False
                         self.pppoedi.disconnect()
+                        GLib.idle_add(self.pppoedi.showAlertMsg,'Não foi possível completar o PPPoE Discovery.', gtk.MessageType.ERROR)
+                    elif 'Connection terminated.' in ppp_status:
+                        self.pppoedi.settings.active_status = False
+                        self.pppoedi.disconnect()
+                        GLib.idle_add(self.pppoedi.showAlertMsg,'A conexão foi terminada.', gtk.MessageType.ERROR)
             time.sleep(0.5)
         #fsyslog.close()

@@ -60,8 +60,10 @@ class PppoeDi(object):
         DBusGMainLoop(set_as_default=True)
         session_bus = dbus.SessionBus()
         self.current_desktop = os.getenv("XDG_CURRENT_DESKTOP")
-        if self.current_desktop == "Unity":#TUDO: Ubuntu 17 diferente
+        if self.current_desktop == "Unity":
             session_bus.add_match_string("type='signal',interface='com.ubuntu.Upstart0_6'")
+        if self.current_desktop == "Unity:Unity7":
+            session_bus.add_match_string("type='signal',interface='com.canonical.Unity.Session")
         elif self.current_desktop == "MATE":
             session_bus.add_match_string("type='signal',interface='org.mate.ScreenSaver'")
         elif self.current_desktop == "GNOME":
@@ -69,7 +71,7 @@ class PppoeDi(object):
         elif self.current_desktop == "X-Cinnamon":
             session_bus.add_match_string("type='signal',interface='org.cinnamon.ScreenSaver'")
         elif self.current_desktop == "LXDE":
-            return
+            session_bus.add_match_string("type='signal',interface='org.freedesktop.DBus'")
         #elif self.current_desktop == "XFCE":
             #return
         else:
@@ -235,10 +237,15 @@ class PppoeDi(object):
         self.disconnect()
     
     def filter_cb(self, bus, message):
-        if message.get_member() == "1" or\
-           message.get_member() == "Disconnected":
+        if message.get_member() == "EndSession" or\
+           message.get_member() == "Disconnected" or\
+           message.get_member() == "LogoutRequested":
                 self.quit_pppoe(None)
         elif message.get_member() == "EventEmitted" or message.get_member() == 'ActiveChanged':
             args = message.get_args_list()
             if args[0] == "session-end":
+                self.quit_pppoe(None)
+        elif message.get_member() == "NameLost":
+            args = message.get_args_list()
+            if args[0] == "org.gnome.ScreenSaver":
                 self.quit_pppoe(None)

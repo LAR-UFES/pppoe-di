@@ -64,14 +64,14 @@ class PppoeDi(object):
             session_bus.add_match_string("type='signal',interface='com.ubuntu.Upstart0_6'")
         if self.current_desktop == "Unity:Unity7":
             session_bus.add_match_string("type='signal',interface='com.canonical.Unity.Session")
-        elif self.current_desktop == "ubuntu:GNOME":
+        elif self.current_desktop == "ubuntu:GNOME" or self.current_desktop == "X-Cinnamon":
             session_bus.add_match_string("type='signal',interface='org.gnome.SessionManager.ClientPrivate'")
         elif self.current_desktop == "MATE":
             session_bus.add_match_string("type='signal',interface='org.mate.ScreenSaver'")
         elif self.current_desktop == "GNOME":
             session_bus.add_match_string("type='signal',interface='org.gnome.ScreenSaver'")
-        elif self.current_desktop == "X-Cinnamon":
-            session_bus.add_match_string("type='signal',interface='org.cinnamon.ScreenSaver'")
+        #elif self.current_desktop == "X-Cinnamon":
+         #   session_bus.add_match_string("type='signal',interface='org.cinnamon.ScreenSaver'")
         elif self.current_desktop == "LXDE":
             session_bus.add_match_string("type='signal',interface='org.freedesktop.DBus'")
         #elif self.current_desktop == "XFCE":

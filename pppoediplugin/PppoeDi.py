@@ -62,7 +62,7 @@ class PppoeDi(object):
         self.current_desktop = os.getenv("XDG_CURRENT_DESKTOP")
         if self.current_desktop == "Unity":
             session_bus.add_match_string("type='signal',interface='com.ubuntu.Upstart0_6'")
-        if self.current_desktop == "Unity:Unity7":
+        elif self.current_desktop == "Unity:Unity7":
             session_bus.add_match_string("type='signal',interface='com.canonical.Unity.Session")
         elif self.current_desktop == "ubuntu:GNOME" or self.current_desktop == "X-Cinnamon":
             session_bus.add_match_string("type='signal',interface='org.gnome.SessionManager.ClientPrivate'")
@@ -77,7 +77,7 @@ class PppoeDi(object):
         #elif self.current_desktop == "XFCE":
             #session_bus.add_match_string("interface='org.xfce.Session.Manager'")
         else:
-            self.showAlertMsg("Sistema não suportado.",gtk.MessageType.ERROR)
+            self.showAlertMsg("Sistema não suportado.99",gtk.MessageType.ERROR)
             sys.exit(1)
         signal.signal(signal.SIGTERM, self.dbus_quit)
         session_bus.call_on_disconnection(self.dbus_quit)

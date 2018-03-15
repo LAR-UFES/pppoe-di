@@ -27,11 +27,21 @@ class PppoeDiCli(object):
         self.check_conn = CheckConnectionCli(self)
         self.check_conn.start()
         try:
-            self.login = input('Login: ')
-            self.password = getpass.getpass()
-            print('\033[93m'+"Use Ctrl-C to disconnect"+'\033[0m')
-            self.connect()
-            GLib.MainLoop().run()
+            if len(sys.argv) == 1:
+                self.login = input('Login: ')
+                self.password = getpass.getpass()
+                print('\033[93m'+"Use Ctrl-C to disconnect"+'\033[0m')
+                self.connect()
+                GLib.MainLoop().run()
+            elif len(sys.argv) == 3:
+                self.login = sys.argv[1]
+                self.password = sys.argv[2]
+                print('\033[93m'+"Use Ctrl-C to disconnect"+'\033[0m')
+                self.connect()
+                GLib.MainLoop().run()
+            else:
+                print('Incorrect form. Use:\npppoedi-cli [login password]')
+                self.quit_pppoe()
         except KeyboardInterrupt:
             self.quit_pppoe()
 

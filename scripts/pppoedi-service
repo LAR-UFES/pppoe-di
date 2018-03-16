@@ -60,8 +60,6 @@ import dbus
 import dbus.service
 import dbus.mainloop.glib
 
-import chardet
-
 class PermissionDeniedByPolicy(dbus.DBusException):
     _dbus_error_name = 'com.ubuntu.DeviceDriver.PermissionDeniedByPolicy'
 
@@ -178,11 +176,7 @@ class PppoeDiService(dbus.service.Object):
                          sender_keyword='sender', connection_keyword='conn')
     def OpenSyslog(self, sender=None, conn=None):
         self._check_polkit_privilege(sender, conn, 'com.lar.pppoediservice.hi')
-        f=open('/var/log/syslog','rb')
-        rawdata=f.readline()
-        f.close()
-        charenc=chardet.detect(rawdata)['encoding']
-        self.fsyslog = open('/var/log/syslog','r',encoding=charenc)
+        self.fsyslog = open('/var/log/syslog','rb')
         
     @dbus.service.method("com.lar.PppoeDi",
                          in_signature='', out_signature='s',

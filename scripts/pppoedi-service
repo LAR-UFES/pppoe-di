@@ -177,6 +177,7 @@ class PppoeDiService(dbus.service.Object):
     def OpenSyslog(self, sender=None, conn=None):
         self._check_polkit_privilege(sender, conn, 'com.lar.pppoediservice.hi')
         self.fsyslog = open('/var/log/syslog','rb')
+        self.fsyslog.seek(0,os.SEEK_END)
         
     @dbus.service.method("com.lar.PppoeDi",
                          in_signature='', out_signature='s',
